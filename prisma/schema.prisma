@@ -1,0 +1,1365 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model api_clients {
+  client_id     String   @id @db.VarChar(50)
+  client_name   String   @db.VarChar(100)
+  client_secret String?  @db.VarChar(255)
+  is_active     Boolean? @default(true)
+  rate_limit    Int?     @default(1000)
+  created_at    DateTime @default(now()) @db.Timestamp(0)
+  updated_at    DateTime @default(now()) @db.Timestamp(0)
+  email         String?  @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+}
+
+model ci_sessions {
+  session_id    String @id @default("0") @db.VarChar(40)
+  ip_address    String @default("0") @db.VarChar(45)
+  user_agent    String @db.VarChar(120)
+  last_activity Int    @default(0) @db.UnsignedInt
+  user_data     String @db.Text
+}
+
+model countries {
+  idCountry   Int    @id @default(autoincrement())
+  countryCode String @default("") @db.Char(2)
+  countryName String @default("") @db.VarChar(45)
+}
+
+model installer {
+  id             Int @id
+  installer_flag Int @default(0) @db.TinyInt
+}
+
+model job_tittle {
+  job_tittle_id Int    @id @default(autoincrement())
+  job_tittle    String @db.VarChar(100)
+}
+
+model tbl_account_type {
+  id          Int      @id
+  code        String?  @db.VarChar(20)
+  name        String?  @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  created     DateTime @db.DateTime(0)
+  modified    DateTime @db.DateTime(0)
+}
+
+model tbl_agents {
+  agent_id                 Int     @id @default(autoincrement())
+  first_name               String  @db.VarChar(20)
+  last_name                String  @db.VarChar(20)
+  email                    String  @db.VarChar(20)
+  phone                    String  @db.VarChar(15)
+  address                  String  @db.VarChar(300)
+  sales_commission_percent Int
+  sales_commison_fixed     Decimal @default(0) @db.Decimal(10, 0)
+  agent_code               String  @db.VarChar(20)
+  commission_type          Int
+  agent_status             String? @db.VarChar(15)
+  sales_person_id          Int
+}
+
+model tbl_alerts_config {
+  alert_id   Int    @id
+  days       String @db.VarChar(11)
+  alert_type Int
+}
+
+model tbl_api_config {
+  config_id    Int    @id
+  api_username String @db.VarChar(100)
+  api_password String @db.VarChar(100)
+  api_id       String @db.VarChar(50)
+  api_base_url String @db.VarChar(300)
+  api_type     String @db.VarChar(100)
+  api_provider String @db.VarChar(50)
+}
+
+model tbl_app_requests {
+  id                Int      @id @default(autoincrement())
+  meterSerialNumber String   @db.VarChar(20)
+  createdAt         DateTime @db.DateTime(0)
+  updatedAt         DateTime @db.DateTime(0)
+  appRequestId      String   @db.VarChar(20)
+  authToken         String   @db.VarChar(100)
+  status            String   @db.VarChar(10)
+  callbackUrl       String   @db.VarChar(300)
+  description       String   @db.VarChar(20)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_asset {
+  asset_id              Int      @id
+  asset_serial_number   String?  @db.VarChar(100)
+  asset_name            String?  @db.VarChar(100)
+  asset_brand           String?  @db.VarChar(50)
+  asset_model           String?  @db.VarChar(20)
+  asset_location        String?  @db.VarChar(10)
+  asset_purchase_price  Float?
+  asset_note            String?  @db.Text
+  status                String?  @db.VarChar(20)
+  asset_category_id     String   @db.VarChar(20)
+  barcode_path          String   @db.VarChar(300)
+  barcode               String   @db.VarChar(100)
+  asset_assignee        String?  @db.VarChar(20)
+  asset_acquired_date   DateTime @db.DateTime(0)
+  asset_warranty_starts DateTime @db.DateTime(0)
+  asset_warranty_ends   DateTime @db.DateTime(0)
+  asset_assigned_to     String   @db.VarChar(100)
+  asset_assigned_date   DateTime @db.DateTime(0)
+  asset_file_name       String   @db.VarChar(300)
+  asset_file_path       String   @db.VarChar(300)
+  asset_image_name      String   @db.VarChar(300)
+  asset_image_path      String   @db.VarChar(300)
+  vendor                String   @db.VarChar(100)
+}
+
+model tbl_asset_brand {
+  asset_brand_id   Int      @id
+  brand_name       String   @db.VarChar(100)
+  created_datetime DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_asset_category {
+  asset_category_id Int      @id
+  category_name     String   @db.VarChar(100)
+  created_datetime  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_asset_model {
+  asset_model_id   Int      @id
+  model_name       String   @db.VarChar(100)
+  created_datetime DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_audit_trial {
+  id            Int    @id @default(autoincrement())
+  user_name     String @db.VarChar(100)
+  ip_address    String @db.VarChar(20)
+  time_stamp    String @db.VarChar(100)
+  action        String @db.Text
+  module        String @db.VarChar(100)
+  name          String @db.VarChar(100)
+  user_agent    String @db.Text
+  last_activity String @db.VarChar(100)
+}
+
+model tbl_auth {
+  id          Int      @id @default(autoincrement())
+  token       String   @db.VarChar(1000)
+  expire_date Int?
+  vendor      String   @db.VarChar(20)
+  created_at  DateTime @db.DateTime(0)
+  updated_at  DateTime @db.DateTime(0)
+}
+
+model tbl_billing {
+  id          Int       @id @default(autoincrement())
+  customer_id Int
+  bill_number String?   @db.VarChar(20)
+  start_date  DateTime? @db.DateTime(0)
+  end_date    DateTime? @db.DateTime(0)
+  filename    String?   @db.VarChar(255)
+  created     DateTime  @db.DateTime(0)
+  modified    DateTime  @db.DateTime(0)
+}
+
+model tbl_branch {
+  branch_id       Int     @id
+  branch_name     String  @db.VarChar(100)
+  branch_location String? @db.VarChar(100)
+}
+
+model tbl_business_profile {
+  business_profile_id Int     @id @default(autoincrement())
+  company_name        String  @db.VarChar(100)
+  logo                String? @db.VarChar(150)
+  full_path           String? @db.VarChar(150)
+  email               String  @db.VarChar(100)
+  address             String  @db.Text
+  phone               String  @db.VarChar(100)
+  currency            String  @db.VarChar(100)
+}
+
+model tbl_campaign {
+  campaign_id   Int      @id
+  campaign_name String   @db.VarChar(128)
+  subject       String   @db.VarChar(128)
+  email_body    String   @db.Text
+  date          DateTime @default(now()) @db.Timestamp(0)
+  created_by    String   @db.VarChar(128)
+}
+
+model tbl_campaign_result {
+  campaign_result_id Int      @id
+  campaign_id        Int
+  campaign_name      String   @db.VarChar(128)
+  subject            String   @db.VarChar(128)
+  date               DateTime @default(now()) @db.Timestamp(0)
+  send_by            String   @db.VarChar(128)
+}
+
+model tbl_cash_in_transactions {
+  id          Int      @id @default(autoincrement())
+  type        String?  @db.VarChar(50)
+  referenceid String?  @db.VarChar(100)
+  txnid       String?  @db.VarChar(100)
+  txnstatus   String?  @db.VarChar(50)
+  message     String?  @db.Text
+  balance     Decimal? @db.Decimal(15, 2)
+  amount      Decimal? @db.Decimal(15, 2)
+  msisdn      String?  @db.VarChar(20)
+  firstname   String?  @db.VarChar(100)
+  lastname    String?  @db.VarChar(100)
+  fullname    String?  @db.VarChar(200)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_cashin_transaction {
+  id                 Int       @id @default(autoincrement())
+  transaction_date   DateTime  @db.DateTime(0)
+  amount             Int
+  referenceid        String    @db.VarChar(20)
+  txnstatus          Int?
+  type               String    @db.VarChar(11)
+  message            String?   @db.VarChar(500)
+  tigo_txnid         String?   @db.VarChar(20)
+  source_msisdn      String    @db.VarChar(12)
+  destination_msisdn String    @db.VarChar(12)
+  date_modified      DateTime? @db.DateTime(0)
+  status             String    @db.VarChar(20)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_collateral {
+  collateral_id              Int
+  loan_id                    Int?
+  customer_id                Int?
+  collateral_serial_number   String?  @db.VarChar(100)
+  collateral_name            String?  @db.VarChar(100)
+  collateral_brand           String?  @db.VarChar(50)
+  collateral_model           String?  @db.VarChar(20)
+  collateral_vendor          String?  @db.VarChar(100)
+  collateral_location        String?  @db.VarChar(10)
+  collateral_purchase_price  Float?
+  collateral_note            String?  @db.Text
+  status                     String?  @db.VarChar(20)
+  collateral_type            String   @db.VarChar(20)
+  barcode_path               String   @db.VarChar(300)
+  barcode                    String   @db.VarChar(100)
+  collateral_assignee        String?  @db.VarChar(20)
+  collateral_acquired_date   DateTime @db.DateTime(0)
+  collateral_warranty_starts DateTime @db.DateTime(0)
+  collateral_warranty_ends   DateTime @db.DateTime(0)
+  collateral_assigned_to     String   @db.VarChar(100)
+  collateral_assigned_date   DateTime @db.DateTime(0)
+  collateral_file_name       String   @db.VarChar(300)
+  collateral_file_path       String   @db.VarChar(300)
+  collateral_image_name      String   @db.VarChar(300)
+  collateral_image_path      String   @db.VarChar(300)
+  vendor                     String   @db.VarChar(100)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_collateral_type {
+  type_id          Int
+  collateral_type  String   @db.VarChar(100)
+  created_datetime DateTime @default(now()) @db.Timestamp(0)
+
+  @@ignore
+}
+
+model tbl_commission {
+  id                   Int      @id @default(autoincrement())
+  landlord_id          Int
+  landloard_percentage Decimal  @default(0.00) @db.Decimal(19, 2)
+  partner_percentage   Decimal  @default(0.00) @db.Decimal(19, 2)
+  payless_percentage   Decimal  @default(100.00) @db.Decimal(19, 2)
+  created              DateTime @db.DateTime(0)
+  modified             DateTime @db.DateTime(0)
+}
+
+model tbl_crdb_luku_requests {
+  id               Int       @id @default(autoincrement())
+  paymentReference String?   @db.VarChar(255)
+  customerMobile   String?   @db.VarChar(20)
+  amount           Decimal?  @db.Decimal(10, 2)
+  requestId        String?   @db.VarChar(255)
+  status           String?   @db.VarChar(50)
+  createdAt        DateTime? @db.DateTime(0)
+  updatedAt        DateTime? @db.DateTime(0)
+  token            String?   @db.VarChar(255)
+  units            String?   @db.VarChar(255)
+}
+
+model tbl_credit_events {
+  id                Int      @id @default(autoincrement())
+  transaction_id    String   @db.VarChar(100)
+  amount            Float
+  created_by        String   @db.VarChar(100)
+  created_at        DateTime @db.DateTime(0)
+  event_type        String   @db.VarChar(10)
+  initial_balance   Float
+  final_balance     Float
+  payment_reference String   @default("NA") @db.VarChar(100)
+  belongs_to        Int      @default(2)
+}
+
+model tbl_current_stock {
+  stock_id         Int      @id @default(autoincrement())
+  customer_id      Int
+  customer_account String   @db.VarChar(11)
+  current_stock    Float
+  last_updated     DateTime @db.Date
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_customer {
+  customer_id          Int       @id @default(autoincrement())
+  customer_account     Int?
+  first_name           String?   @db.VarChar(100)
+  last_name            String?   @db.VarChar(100)
+  birth_date           DateTime? @db.DateTime(0)
+  gender               String?   @db.VarChar(100)
+  house_no             String?   @db.VarChar(100)
+  village              String?   @db.VarChar(100)
+  district             String?   @db.VarChar(100)
+  address              String?   @db.Text
+  phone                String?   @db.VarChar(100)
+  email                String?   @db.VarChar(100)
+  business_name        String?   @db.VarChar(100)
+  description          String?   @db.VarChar(300)
+  borrowers_photo_name String?   @db.VarChar(100)
+  borrowers_photo_path String?   @db.VarChar(300)
+  borrowers_file_name  String?   @db.VarChar(300)
+  borrowers_file_path  String?   @db.VarChar(300)
+  registration_date    DateTime? @db.DateTime(0)
+  status               String?   @default("pending") @db.VarChar(20)
+  parent_id            Int?
+  user_id              Int?
+  account_type         Int?
+  super_parent_id      Int?      @default(0)
+  lead_id              Int?      @default(0)
+  belongs_to           Int?      @default(1)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_customer_invoice {
+  customer_invoice_id   Int
+  attribute_description String    @db.VarChar(100)
+  attribute_quantity    Float
+  attribute_price       Float
+  subtotal              Float?
+  customer_id           Int?
+  visit_id              Int?
+  invoice_no            Int?
+  invoice_creation_date DateTime? @db.DateTime(0)
+  invoice_title         String?   @db.VarChar(100)
+
+  @@ignore
+}
+
+model tbl_customer_invoice_details {
+  customer_invoice_id   Int       @id @default(autoincrement())
+  payment_ref           Int
+  attribute_description String    @db.VarChar(100)
+  attribute_quantity    Float
+  attribute_price       Float
+  subtotal              Float?
+  customer_id           String?   @db.VarChar(30)
+  customer_visit_id     Int?
+  customer_name         String?   @db.VarChar(120)
+  invoice_no            Int?
+  invoice_creation_date DateTime? @db.DateTime(0)
+  invoice_title         String?   @db.VarChar(100)
+  payment_method        String    @default("cash") @db.VarChar(20)
+  discount_amount       Float?
+  phone                 String?   @db.VarChar(20)
+  address               String?   @db.VarChar(100)
+  shipping_address      String?   @db.VarChar(100)
+  note                  String?   @db.VarChar(100)
+  created_by            String?   @db.VarChar(100)
+  status                String    @db.VarChar(10)
+  invoice_type          String?   @db.VarChar(20)
+}
+
+model tbl_customer_menu {
+  customer_menu_id Int    @id @default(autoincrement())
+  menu_id          String @db.VarChar(100)
+  menu_description String @db.VarChar(100)
+}
+
+model tbl_discovery {
+  id            Int                    @id @default(autoincrement())
+  issue_type_id Int                    @default(0)
+  meter_id      Int                    @default(0)
+  description   String?                @db.VarChar(500)
+  remarks       String?                @db.VarChar(1000)
+  status        Int                    @default(0)
+  deleted       Int                    @default(0)
+  priority      tbl_discovery_priority
+  created       DateTime               @db.DateTime(0)
+  modified      DateTime               @db.DateTime(0)
+}
+
+model tbl_expense {
+  expense_id          Int      @id
+  expense_category_id String   @db.VarChar(100)
+  employee            String?  @db.VarChar(100)
+  amount              Float
+  description         String   @db.VarChar(100)
+  date_time_created   DateTime @default(now()) @db.Timestamp(0)
+  created_by          String   @db.VarChar(100)
+  filename            String   @db.VarChar(100)
+  file_path           String   @db.VarChar(100)
+}
+
+model tbl_expense_category {
+  expense_category_id Int      @id
+  category_name       String   @db.VarChar(100)
+  created_datetime    DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_external_payment_requests {
+  id                Int      @id @default(autoincrement())
+  order_number      String   @db.VarChar(100)
+  amount            Float
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+  client_id         String?  @db.VarChar(100)
+  session_id        String   @db.VarChar(100)
+  msisdn            String   @db.VarChar(20)
+  payment_method    String   @db.VarChar(20)
+  auth_token        String?  @db.VarChar(300)
+  status            String?  @db.VarChar(10)
+  callback_url      String?  @db.VarChar(300)
+  customer_id       String?  @db.VarChar(200)
+  request_reference String?  @db.VarChar(300)
+  insight_reference String?  @db.VarChar(200)
+}
+
+model tbl_id_history_config {
+  id         Int @id
+  id_history Int
+}
+
+model tbl_in_message {
+  id               Int       @id @default(autoincrement())
+  meter_id         Int       @default(0)
+  meter_serial     String?   @db.VarChar(15)
+  credit_value     Decimal?  @db.Decimal(10, 1)
+  credit_status    Boolean?
+  relay_status     Boolean?
+  tempering_status Boolean?
+  timestamp        Int?
+  created          DateTime? @db.DateTime(0)
+  modified         DateTime? @db.DateTime(0)
+}
+
+model tbl_invoice {
+  id             Int      @id @default(autoincrement())
+  invoice_number String?  @db.VarChar(20)
+  order_id       Int?
+  status         Boolean  @default(false)
+  details        String?  @db.VarChar(255)
+  created        DateTime @db.DateTime(0)
+  modified       DateTime @db.DateTime(0)
+
+  @@index([invoice_number], map: "idx_invoice_number")
+  @@index([order_id], map: "idx_order_id")
+}
+
+model tbl_issue_type {
+  id       Int      @id @default(autoincrement())
+  code     String?  @db.VarChar(20)
+  name     String?  @db.VarChar(255)
+  created  DateTime @db.DateTime(0)
+  modified DateTime @db.DateTime(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_job_title {
+  job_title_id     Int
+  job_title_name   String   @db.VarChar(100)
+  created_datetime DateTime @default(now()) @db.Timestamp(0)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_lead {
+  lead_id              Int     @id @default(autoincrement())
+  location             String  @db.VarChar(200)
+  business_name        String? @db.VarChar(100)
+  building_type        String  @db.VarChar(100)
+  solution_type        String? @db.VarChar(100)
+  number_of_meters     Int
+  income_class         String  @db.VarChar(100)
+  house_no             String? @db.VarChar(100)
+  village              String? @db.VarChar(100)
+  district             String? @db.VarChar(100)
+  address              String? @db.Text
+  phone                String? @db.VarChar(100)
+  email                String? @db.VarChar(100)
+  borrowers_photo_path String? @db.VarChar(300)
+  borrowers_photo_name String? @db.VarChar(100)
+  description          String? @db.VarChar(300)
+  borrowers_file_path  String? @db.VarChar(300)
+  borrowers_file_name  String? @db.VarChar(300)
+  customer_account     Int
+  lead_status          Int
+  agent_id             Int?
+  sales_person_id      Int
+  registered_by        Int
+
+  @@index([lead_id], map: "lead_id")
+}
+
+model tbl_lead_deal {
+  lead_deal_id           Int     @id @default(autoincrement())
+  lead_id                Int
+  meters_sold            Int     @default(0)
+  volume_amount          Decimal @default(0) @db.Decimal(10, 0)
+  total_due_amount       Decimal @default(0) @db.Decimal(10, 0)
+  paid_invoice_number    String  @default("0") @db.VarChar(20)
+  paid_invoice_amount    Decimal @default(0) @db.Decimal(10, 0)
+  pending_invoice_number String  @default("0") @db.VarChar(20)
+  pending_invoice_amount Decimal @default(0) @db.Decimal(10, 0)
+
+  @@index([lead_deal_id], map: "id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_loan {
+  loan_id                     Int
+  customer_id                 Int
+  loan_details_id             Int?
+  loan_number                 Int?
+  loan_release_date           DateTime? @db.DateTime(0)
+  maturity_date               DateTime? @db.DateTime(0)
+  loan_repayment_cycle        String    @db.VarChar(20)
+  principal_amount            Float?
+  loan_interest_percent       Float?
+  loan_interest_period_scheme String?   @db.VarChar(20)
+  loan_interest               Float?
+  loan_fees                   Float?
+  loan_penalty                Int?
+  amount_due                  Float?
+  paid_amount                 Float?
+  balance_amount              Float?
+  loan_status                 Int?
+  approval                    Int?      @default(0)
+  fully_paid                  Int?      @default(0)
+  payment_counter             Int       @default(0)
+  last_payment_at             String    @db.VarChar(30)
+  last_payment_amount         Float
+  total_receivable            Float     @default(0)
+  excess_paid                 Float     @default(0)
+  next_due                    DateTime? @db.DateTime(0)
+  next_due_amount             Float     @default(0)
+  branch_id                   Int?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_loan_comments {
+  comment_id  Int
+  loan_id     Int
+  comment     String   @db.Text
+  posted_by   String   @db.VarChar(100)
+  date_posted DateTime @db.DateTime(0)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_loan_details {
+  loan_details_id             Int
+  customer_id                 Int
+  loan_id                     Int?
+  loan_number                 Int?
+  loan_product                Int?
+  loan_release_date           DateTime? @db.DateTime(0)
+  loan_disbursed_by           String?   @db.VarChar(100)
+  principal_amount            Float?
+  loan_interest_method        String    @db.VarChar(200)
+  loan_interest_percent       Int?
+  compound_interval           String?   @db.VarChar(20)
+  loan_interest_period_scheme String?   @db.VarChar(100)
+  loan_duration               Int?
+  loan_duration_scheme        String?   @db.VarChar(100)
+  loan_repayment_cycle        String?   @db.VarChar(11)
+  loan_num_of_repayments      Int?
+  loan_file_name              String?   @db.VarChar(100)
+  loan_file_path              String?   @db.VarChar(300)
+  loan_image_name             String?   @db.VarChar(100)
+  loan_image_path             String?   @db.VarChar(300)
+  loan_status                 String?   @db.VarChar(20)
+  branch_id                   Int?
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_loan_groups {
+  loan_group_id            Int
+  group_name               String  @db.VarChar(100)
+  group_borrower_ids       String? @db.Text
+  group_leader_borrower_id String? @db.VarChar(100)
+  group_collector_name     String? @db.VarChar(100)
+  group_meeting_schedule   String? @db.VarChar(100)
+  group_description        String? @db.VarChar(100)
+  branch_id                Int
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_loan_repayment {
+  repayment_id     Int
+  loan_id          String?   @db.VarChar(20)
+  loan_number      String?   @db.VarChar(20)
+  repayment_amount Float?
+  repayment_method String?   @db.VarChar(500)
+  collection_date  DateTime? @db.DateTime(0)
+  collected_by     String?   @db.VarChar(100)
+  comments         String?   @db.VarChar(100)
+  customer_id      Int?
+  paid_amount      Float
+  balance_amount   Float
+  branch_id        Int
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_loan_schedule {
+  schedule_id            Int
+  loan_id                Int
+  customer_id            Int
+  loan_details_id        Int?
+  repayment_number       Int
+  description            String?   @db.VarChar(100)
+  repayment_date         DateTime? @db.DateTime(0)
+  principal_amount       Float?
+  loan_interest          Float?
+  loan_fees              Float?
+  loan_penalty           Int?
+  amount_due             Float?
+  total_due              Float?
+  paid_amount            Float?
+  pending_due            Float?    @default(0)
+  principal_balance_owed Float?
+  repayment_status       Int       @default(0)
+  excess_paid            Float     @default(0)
+  repayment_id           Int
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_localization {
+  localization_id           Int     @id @default(autoincrement())
+  timezone                  String  @db.VarChar(100)
+  country                   Int
+  date_format               String  @db.VarChar(50)
+  currency_format           String  @db.VarChar(50)
+  language                  String  @db.VarChar(100)
+  currency                  String  @db.VarChar(50)
+  unit_price                Float
+  sender_id                 String  @db.VarChar(15)
+  token_api_version         Int
+  luku_api_status           Int     @default(1)
+  sms_gateway               String  @db.VarChar(11)
+  pssf_switcher             Int?    @default(2)
+  device                    Int?    @default(1)
+  rental_api_url            String? @default("https://booking.mia.co.tz/api") @db.VarChar(300)
+  campaign_status           Int     @default(2)
+  campaign_message          String  @db.Text
+  token_confirmation_status Int?    @default(2)
+  luku_gateway              String? @db.VarChar(255)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_luku_transactions_req {
+  id                   Int      @id @default(autoincrement())
+  payless_meter_number String   @db.VarChar(15)
+  msisdn               String   @db.VarChar(15)
+  tanesco_meter_number String   @db.VarChar(15)
+  created_at           DateTime @db.DateTime(0)
+  updated_at           DateTime @db.DateTime(0)
+  status               Int      @default(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_menu {
+  menu_id   Int    @id @default(autoincrement())
+  label     String @db.VarChar(100)
+  link      String @db.VarChar(100)
+  icon      String @db.VarChar(100)
+  parent    Int
+  sort      Int
+  menu_type Int    @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_merchant_payment_config {
+  config_id    Int    @id @default(autoincrement())
+  customer_id  Int
+  phone_number String @db.VarChar(15)
+  status       Int
+}
+
+model tbl_merchant_payments {
+  id               Int    @id @default(autoincrement())
+  reference_number String @db.VarChar(20)
+  amount           Int
+  status           String @db.VarChar(20)
+  transID          String @db.VarChar(100)
+  timestamp        String @db.VarChar(100)
+  msisdn           String @db.VarChar(12)
+  merchant_id      Int
+  api_username     String @db.VarChar(100)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_merchant_references {
+  id                Int     @id
+  customer_id       Int?    @default(0)
+  user_id           Int     @default(0)
+  reference_number  String? @db.VarChar(100)
+  location          String? @db.VarChar(10)
+  notes             String? @db.Text
+  status            String? @default("0") @db.VarChar(20)
+  assigned_to       String  @db.VarChar(100)
+  customer_identity String  @db.VarChar(100)
+  identity_type     String  @db.VarChar(100)
+  balance           Float   @default(0)
+  reference_prefix  String  @db.VarChar(4)
+  last_updated      String  @db.VarChar(100)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_merchants {
+  id             Int     @id @default(autoincrement())
+  customer_id    Int
+  user_id        Int
+  nick_name      String? @db.VarChar(100)
+  company_prefix String  @db.VarChar(4)
+  api_url        String? @db.VarChar(300)
+  api_username   String? @db.VarChar(11)
+  apis_password  String? @db.VarChar(100)
+  company_name   String  @db.VarChar(100)
+  api_enabled    Int     @default(2)
+  auth_code      String  @db.VarChar(100)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_meter {
+  meter_id                Int       @id @unique(map: "meter_id") @default(autoincrement())
+  customer_id             Int?
+  site_id                 Int       @default(0)
+  landlord_id             Int       @default(0)
+  meter_serial_number     String?   @db.VarChar(100)
+  meter_number            String?   @db.VarChar(100)
+  meter_brand             String?   @db.VarChar(50)
+  meter_model             String?   @db.VarChar(20)
+  meter_vendor            String?   @db.VarChar(100)
+  meter_location          String?   @db.VarChar(100)
+  meter_purchase_price    Float?
+  meter_note              String?   @db.Text
+  status                  String?   @db.VarChar(20)
+  meter_type              String?   @db.VarChar(20)
+  barcode_path            String?   @db.VarChar(300)
+  barcode                 String?   @db.VarChar(100)
+  meter_assignee          String?   @db.VarChar(20)
+  meter_acquired_date     DateTime? @db.DateTime(0)
+  meter_warranty_starts   DateTime? @db.DateTime(0)
+  meter_warranty_ends     DateTime? @db.DateTime(0)
+  meter_assigned_to       String?   @db.VarChar(100)
+  meter_assigned_date     DateTime? @db.DateTime(0)
+  meter_file_name         String?   @db.VarChar(300)
+  meter_file_path         String?   @db.VarChar(300)
+  meter_image_name        String?   @db.VarChar(300)
+  meter_image_path        String?   @db.VarChar(300)
+  vendor                  String?   @db.VarChar(100)
+  utility_power_tariff    Decimal   @default(0.00) @db.Decimal(10, 2)
+  generator_power_tariff  Decimal   @default(0.00) @db.Decimal(10, 2)
+  extra_profit_percentage Decimal   @default(0.00) @db.Decimal(10, 2)
+  platform_revenue_share  Decimal   @default(0.01) @db.Decimal(10, 2)
+  currency_id             Int       @default(0)
+  install_date            DateTime? @db.Date
+  merchant_status         Int       @default(2)
+  partner_id              Int?
+  credit_remainder        Float?
+  meter_category          Int       @default(0)
+  meter_belongs           Int       @default(1)
+  test_meter              Int       @default(0)
+  krn                     Int       @default(1)
+  rent_verify_enabled     Int?      @default(0)
+
+  @@index([customer_id], map: "idx_customer_id")
+  @@index([landlord_id], map: "idx_landlord_id")
+  @@index([site_id], map: "idx_site_id")
+}
+
+model tbl_meter_sgc {
+  meter_sgc_id Int @id @default(autoincrement())
+  meter_id     Int @unique(map: "meter_id")
+  sgcid        Int
+}
+
+model tbl_meter_type {
+  type_id          Int      @id @default(autoincrement())
+  meter_type       String   @db.VarChar(100)
+  created_datetime DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_mobile_payments {
+  id                         Int     @id @default(autoincrement())
+  payment_method             String? @db.VarChar(45)
+  transaction_id             String? @db.VarChar(45)
+  amount                     Float?
+  msisdn                     String? @db.VarChar(45)
+  customer_reference_id      String? @db.VarChar(256)
+  transaction_date           String? @db.VarChar(30)
+  payment_status             String? @db.VarChar(50)
+  payment_status_description String? @db.VarChar(200)
+  token                      String? @db.Text
+  transaction_type           Int     @default(1)
+  company_name               String  @db.VarChar(100)
+  customer_id                Int     @default(0)
+  landlord_id                Int     @default(0)
+  payment_source             Int     @default(1)
+  meter_type                 String  @db.VarChar(80)
+  payment_belongs            Int     @default(1)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_mobile_payments_archive {
+  id                         Int     @default(0)
+  payment_method             String? @db.VarChar(45)
+  transaction_id             String? @db.VarChar(45)
+  amount                     Float?
+  msisdn                     String? @db.VarChar(45)
+  customer_reference_id      String? @db.VarChar(256)
+  transaction_date           String? @db.VarChar(30)
+  payment_status             String? @db.VarChar(50)
+  payment_status_description String? @db.VarChar(200)
+  token                      String? @db.Text
+  transaction_type           Int     @default(1)
+  company_name               String  @db.VarChar(100)
+  customer_id                Int     @default(0)
+  landlord_id                Int     @default(0)
+  payment_source             Int     @default(1)
+  meter_type                 String  @db.VarChar(80)
+  payment_belongs            Int     @default(1)
+
+  @@ignore
+}
+
+model tbl_money_manager_account {
+  money_manager_account_id Int      @id
+  account_name             String   @db.VarChar(100)
+  created_datetime         DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_money_manager_budget {
+  money_manager_budget_id Int       @id
+  budget_name             String    @db.VarChar(100)
+  budget_amount           Float     @db.Float
+  budget_date             DateTime? @db.Date
+}
+
+model tbl_money_manager_category {
+  money_manager_category_id Int      @id
+  category_name             String   @db.VarChar(100)
+  category_type             String   @db.VarChar(20)
+  created_datetime          DateTime @default(now()) @db.Timestamp(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_money_manager_income {
+  money_manager_income_id Int
+  income_name             String    @db.VarChar(100)
+  income_account          String    @db.VarChar(100)
+  income_amount           Float     @db.Float
+  income_category         String    @db.VarChar(100)
+  income_note             String    @db.VarChar(300)
+  income_date             DateTime? @db.Date
+
+  @@ignore
+}
+
+model tbl_ndc_list {
+  id   Int    @id @default(autoincrement())
+  ndc  Int
+  flag Int
+  smsc String @db.VarChar(10)
+}
+
+model tbl_order {
+  id          Int      @id @default(autoincrement())
+  customer_id Int?
+  status      Boolean  @default(false)
+  created     DateTime @default(now()) @db.DateTime(0)
+  modified    DateTime @default(now()) @db.DateTime(0)
+}
+
+model tbl_order_item {
+  id         Int      @id @default(autoincrement())
+  order_id   Int?
+  product_id Int?
+  quantity   Int?
+  created    DateTime @db.DateTime(0)
+  modified   DateTime @db.DateTime(0)
+}
+
+model tbl_out_message {
+  id                   Int      @id @default(autoincrement())
+  meter_id             Int
+  landloard_percentage Decimal  @default(0.00) @db.Decimal(19, 2)
+  partner_percentage   Decimal  @default(0.00) @db.Decimal(19, 2)
+  payless_percentage   Decimal  @default(15.00) @db.Decimal(19, 2)
+  created              DateTime @db.DateTime(0)
+  modified             DateTime @db.DateTime(0)
+}
+
+model tbl_payment {
+  id             Int      @id @default(autoincrement())
+  txn_id         String   @db.VarChar(50)
+  invoice_number String?  @db.VarChar(20)
+  payment_method String   @db.VarChar(50)
+  payer_status   String   @db.VarChar(50)
+  payer_email    String?  @db.VarChar(100)
+  total          Decimal  @db.Decimal(19, 2)
+  subtotal       Decimal  @db.Decimal(19, 2)
+  tax            Decimal  @db.Decimal(19, 2)
+  payment_state  String   @db.VarChar(50)
+  created        DateTime @db.DateTime(0)
+  modified       DateTime @db.DateTime(0)
+
+  @@index([invoice_number], map: "idx_invoice_number")
+  @@index([txn_id], map: "idx_txn_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_product {
+  id              Int
+  product_type_id Int      @default(0)
+  name            String?  @db.VarChar(100)
+  price           Decimal  @default(0.00) @db.Decimal(10, 2)
+  description     String?  @db.VarChar(100)
+  created         DateTime @db.DateTime(0)
+  modified        DateTime @db.DateTime(0)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_product_type {
+  id                Int
+  product_type_code String?  @db.VarChar(20)
+  name              String?  @db.VarChar(100)
+  description       String?  @db.VarChar(255)
+  parent_id         Int?
+  created           DateTime @db.DateTime(0)
+  modified          DateTime @db.DateTime(0)
+
+  @@ignore
+}
+
+model tbl_pssf_transactions {
+  id                    Int     @unique(map: "id_UNIQUE") @default(autoincrement())
+  amount                Decimal @db.Decimal(11, 0)
+  meter_serial_number   String? @db.VarChar(45)
+  units                 Float?
+  created_at            Int?
+  updated_at            Int?
+  request_type          String? @db.VarChar(45)
+  transaction_reference String? @db.VarChar(45)
+  payment_reference     String? @db.VarChar(45)
+  token                 String? @db.VarChar(45)
+  message               String? @db.VarChar(300)
+  msisdn                String? @db.VarChar(45)
+
+  @@id([id, amount])
+}
+
+model tbl_psssf_meter {
+  id               Int      @id @default(autoincrement())
+  meter_number     String   @db.VarChar(100)
+  created_datetime DateTime @default(now()) @db.Timestamp(0)
+}
+
+model tbl_sales_person_menu {
+  sales_person_menu_id Int    @id @default(autoincrement())
+  menu_id              String @db.VarChar(100)
+  menu_description     String @db.VarChar(100)
+}
+
+model tbl_sales_persons {
+  sales_person_id   Int      @id @default(autoincrement())
+  sales_person_code String   @db.VarChar(20)
+  first_name        String   @db.VarChar(100)
+  last_name         String   @db.VarChar(100)
+  user_name         String   @db.VarChar(15)
+  email             String   @db.VarChar(30)
+  phone             String   @db.VarChar(20)
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+  status            String   @db.VarChar(11)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_selecom_txns_validations {
+  id         Int       @id @default(autoincrement())
+  operator   String?   @db.VarChar(20)
+  transid    String?   @db.VarChar(20)
+  reference  String?   @db.VarChar(20)
+  utilityref String?   @db.VarChar(20)
+  amount     Float?
+  msisdn     String?   @db.VarChar(20)
+  createdAt  DateTime? @db.DateTime(0)
+  updatedAt  DateTime? @db.DateTime(0)
+  status     String?   @db.VarChar(10)
+  timestamp  String?   @db.VarChar(45)
+}
+
+model tbl_sgclist {
+  sgcid       Int    @id @default(autoincrement())
+  sgc_id      String @db.VarChar(100)
+  description String @db.VarChar(300)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_sgclist_bak {
+  sgcid       Int    @default(0)
+  sgc_id      String @db.VarChar(100)
+  description String @db.VarChar(300)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_site {
+  id                     Int      @id @default(autoincrement())
+  code                   String?  @db.VarChar(20)
+  site_name              String?  @db.VarChar(100)
+  site_description       String?  @db.VarChar(255)
+  lat                    Decimal? @db.Decimal(10, 8)
+  lng                    Decimal? @db.Decimal(11, 8)
+  created                DateTime @db.DateTime(0)
+  modified               DateTime @db.DateTime(0)
+  service_type           Int      @default(1)
+  belongs_to             Int      @default(1)
+  message_type           Int?
+  enable_mobile_payments Int      @default(1)
+  chat_tagging           Int?     @default(2)
+  tbl_sitecol            String?  @db.VarChar(45)
+}
+
+model tbl_site_manager {
+  id           Int    @id @default(autoincrement())
+  full_name    String @db.VarChar(100)
+  phone_number String @db.VarChar(15)
+  status       Int?
+  site_id      Int
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_site_setting {
+  id                           Int      @id @default(autoincrement())
+  site_id                      Int      @default(0)
+  generator_power_tariff       Decimal  @default(450.00) @db.Decimal(10, 2)
+  utility_power_tariff         Decimal  @default(300.00) @db.Decimal(10, 2)
+  actual_gen_power_tariff      Decimal  @default(450.00) @db.Decimal(10, 2)
+  actual_util_power_tariff     Decimal  @default(300.00) @db.Decimal(10, 2)
+  platform_revenue_share       Decimal  @default(0.15) @db.Decimal(10, 2)
+  t1_amount_ratio              Decimal  @default(0.80) @db.Decimal(10, 2)
+  t2_price_factor              Decimal  @default(1.50) @db.Decimal(10, 2)
+  created                      DateTime @db.DateTime(0)
+  modified                     DateTime @db.DateTime(0)
+  fixed_platform_revenue_share Float    @default(0)
+  isRefundable                 Int      @default(1)
+  water_price_per_unit         Decimal  @default(0) @db.Decimal(10, 0)
+
+  @@index([site_id], map: "idx_site_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_smpp_hits {
+  id             Int
+  from_msisdn    String? @db.VarChar(15)
+  device_id      String? @db.VarChar(45)
+  secrete        String? @db.VarChar(45)
+  message_id     String? @db.VarChar(45)
+  sent_to        String? @db.VarChar(30)
+  message        String  @db.VarChar(1000)
+  sent_timestamp String  @db.VarChar(45)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_sms_sent {
+  id              Int      @id @default(autoincrement())
+  sender          String?  @default("NULL") @db.VarChar(15)
+  msgid           String?  @default("NULL") @db.VarChar(100)
+  response_data   String   @db.Text
+  message         String   @db.Text
+  msg_receiver    String   @db.LongText
+  sent_timestamp  DateTime @default(now()) @db.DateTime(0)
+  response_status String   @db.VarChar(500)
+  smsc            String?  @db.VarChar(10)
+  status          String?  @db.VarChar(100)
+  failure_msg     String   @db.VarChar(100)
+  ts_smsc         String?  @db.VarChar(20)
+  belongs_to      Int      @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_sms_sent_backup {
+  id              Int      @id @default(autoincrement())
+  sender          String?  @default("NULL") @db.VarChar(15)
+  msgid           String?  @default("NULL") @db.VarChar(100)
+  response_data   String   @db.Text
+  message         String   @db.Text
+  msg_receiver    String   @db.LongText
+  sent_timestamp  DateTime @default(now()) @db.DateTime(0)
+  response_status String   @db.VarChar(500)
+  smsc            String?  @db.VarChar(10)
+  status          String?  @db.VarChar(100)
+  failure_msg     String   @db.VarChar(100)
+  ts_smsc         String?  @db.VarChar(20)
+  belongs_to      Int      @default(1)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_static_tokens {
+  id               Int      @id @default(autoincrement())
+  meter_id         Int?     @default(0)
+  token            String   @default("0") @db.VarChar(100)
+  denomination     Float?
+  created          String   @db.VarChar(100)
+  status           String?  @default("1") @db.VarChar(20)
+  last_updated     DateTime @db.DateTime(0)
+  token_dlr_status Int      @default(0)
+}
+
+model tbl_stock {
+  stock_id        Int      @id @default(autoincrement())
+  current_balance Float    @default(0)
+  created_at      DateTime @db.DateTime(0)
+  updated_at      DateTime @db.DateTime(0)
+  belongs_to      Int      @default(2)
+}
+
+model tbl_stock_settings {
+  stock_settings_id      Int   @id @default(autoincrement())
+  minimum_wallet_balance Float @default(0)
+  belongs_to             Int   @default(2)
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_stock_transactions {
+  id                Int      @id @default(autoincrement())
+  meter_number      String   @db.VarChar(15)
+  msisdn            String   @db.VarChar(15)
+  amount            String   @db.VarChar(15)
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+  status            Int      @default(0)
+  charges           Float
+  charges_exclusive Float
+  belongs_to        Int      @default(2)
+}
+
+model tbl_system_wallet {
+  id           Int      @id @default(autoincrement())
+  stock_kwh    Float
+  last_updated DateTime @db.DateTime(0)
+}
+
+model tbl_third_party_meter {
+  id           Int       @id @default(autoincrement())
+  meter_number String?   @db.VarChar(50)
+  vendor       String?   @db.VarChar(100)
+  vendor_code  String?   @default("000") @db.Char(3)
+  site_id      Int?      @default(0)
+  created      DateTime? @db.DateTime(0)
+  modified     DateTime? @db.DateTime(0)
+  verified     String?   @default("no") @db.VarChar(10)
+  name         String?   @db.VarChar(200)
+  checked      String?   @default("no") @db.VarChar(45)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_third_party_meter_backup {
+  id           Int       @default(0)
+  meter_number String?   @db.VarChar(50)
+  vendor       String?   @db.VarChar(100)
+  vendor_code  String?   @default("000") @db.Char(3)
+  site_id      Int?      @default(0)
+  created      DateTime? @db.DateTime(0)
+  modified     DateTime? @db.DateTime(0)
+  verified     String?   @default("no") @db.VarChar(10)
+  name         String?   @db.VarChar(200)
+  checked      String?   @default("no") @db.VarChar(45)
+
+  @@ignore
+}
+
+model tbl_third_party_meter_mapping {
+  id                   Int      @id @default(autoincrement())
+  meter_id             Int?     @default(0)
+  third_party_meter_id Int?     @default(0)
+  created              DateTime @db.DateTime(0)
+  modified             DateTime @db.DateTime(0)
+}
+
+model tbl_token_sale {
+  id                  Int      @id @default(autoincrement())
+  order_id            Int?
+  meter_id            Int?
+  invoice_id          Int?
+  units               Decimal  @default(0.0) @db.Decimal(10, 1)
+  units_t2            Decimal  @default(0.0) @db.Decimal(10, 1)
+  amount              Decimal? @default(0.00) @db.Decimal(10, 2)
+  effective_amount    Decimal  @default(0.00) @db.Decimal(10, 2)
+  effective_amount_t1 Decimal  @default(0.00) @db.Decimal(10, 2)
+  effective_amount_t2 Decimal  @default(0.00) @db.Decimal(10, 2)
+  token               String?  @db.VarChar(100)
+  token_t2            String?  @db.VarChar(100)
+  token_luku          String?  @db.VarChar(300)
+  status              Boolean  @default(false)
+  created             DateTime @db.DateTime(0)
+  modified            DateTime @db.DateTime(0)
+
+  @@index([invoice_id], map: "idx_invoice_id")
+  @@index([meter_id], map: "idx_meter_id")
+  @@index([order_id], map: "idx_order_id")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_token_transactions {
+  transaction_id        Int      @id @default(autoincrement())
+  sgc                   Int?
+  sgcNew                Int?
+  req_type              String?  @db.VarChar(100)
+  meter_number          String?  @db.VarChar(110)
+  kWh                   Decimal? @default(0) @db.Decimal(11, 0)
+  TariffIndex           Int?
+  NewTariffIndex        Int?
+  transferAmount        Float?   @db.Float
+  phone_number          String?  @db.VarChar(15)
+  response_status       String?  @db.Text
+  status                Int?
+  sgcid                 Int?
+  token                 String?  @db.VarChar(80)
+  subclass              Int?
+  value                 Int?
+  optional_meter_number String?  @db.VarChar(45)
+  krn                   Int?
+}
+
+model tbl_track_token {
+  id    Int     @id @default(autoincrement())
+  token String? @db.VarChar(255)
+  units String? @db.VarChar(255)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_transaction {
+  id                  Int
+  invoice_id          Int?
+  amount              Decimal? @db.Decimal(10, 2)
+  transaction_details String?  @db.VarChar(255)
+  created             DateTime @db.DateTime(0)
+  modified            DateTime @db.DateTime(0)
+
+  @@ignore
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model tbl_user {
+  user_id          Int     @id @default(autoincrement())
+  user_name        String  @db.VarChar(100)
+  name             String  @db.VarChar(100)
+  email            String  @db.VarChar(100)
+  password         String  @db.VarChar(200)
+  filename         String? @db.VarChar(128)
+  image_path       String? @db.VarChar(128)
+  flag             Int     @default(0) @db.TinyInt
+  user_category_id Int?
+  customer_id      Int?
+  account_type     Int?
+  account_balance  Float?  @default(0)
+  parent_id        Int?
+  approved         Int     @default(1)
+  password_change  Int     @default(1)
+  user_related_id  Int?
+  user_belongs     Int     @default(1)
+}
+
+model tbl_user_role {
+  user_role_id      Int @id @default(autoincrement())
+  employee_login_id Int
+  menu_id           Int
+}
+
+model tbl_vending_logs {
+  id                    Int      @id @default(autoincrement())
+  meter_number          String   @db.VarChar(50)
+  token                 String   @db.VarChar(30)
+  description           String   @db.VarChar(30)
+  original_meter_number String?  @db.VarChar(30)
+  created_at            DateTime @db.DateTime(0)
+  updated_at            DateTime @db.DateTime(0)
+  status                Int
+  raw                   String?  @db.Text
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model tbl_vendor {
+  vendor_id    Int
+  company_name String @db.VarChar(100)
+  vendor_name  String @db.VarChar(100)
+  email        String @db.VarChar(100)
+  phone        String @db.VarChar(100)
+  address      String @db.Text
+
+  @@ignore
+}
+
+model tbl_wallets_config {
+  id                             Int    @id @default(autoincrement())
+  apiUsername                    String @db.VarChar(20)
+  apiPassword                    String @db.VarChar(20)
+  apiType                        String @default("xmlrpc") @db.VarChar(20)
+  apiMinimumAmount               Float  @default(1000)
+  unitprice                      Float
+  equivalent_days_per_unit_price Float  @default(7)
+}
+
+enum tbl_discovery_priority {
+  Low
+  Medium
+  High
+}
