@@ -141,7 +141,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-8xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
@@ -171,16 +171,18 @@ export default function PaymentPage() {
             
             {/* Search and Filter Section */}
             <div className="mb-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SearchBar 
-                  onSearch={handleSearch}
-                  placeholder="Search by Transaction ID, MSISDN, or Reference..."
-                />
+              <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-4">
+                <div className="flex-1">
+                  <SearchBar 
+                    onSearch={handleSearch}
+                    placeholder="Search by Transaction ID, MSISDN, or Reference..."
+                  />
+                </div>
                 
                 <select
                   value={statusFilter}
                   onChange={(e) => handleStatusFilter(e.target.value)}
-                  className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="block w-full md:w-auto md:max-w-[200px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 >
                   <option value="">All Statuses</option>
                   <option value="SUCCESFUL">Success</option>
@@ -190,7 +192,7 @@ export default function PaymentPage() {
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  className="block w-full md:w-auto md:max-w-[200px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 >
                   <option value={10}>10 per page</option>
                   <option value={20}>20 per page</option>
@@ -232,22 +234,22 @@ export default function PaymentPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr className='uppercase'>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Transaction ID
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Meter Number
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Phone Number
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           SMS Token
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Tokens
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Date/Amount
                         </th>
                       </tr>
@@ -277,7 +279,7 @@ export default function PaymentPage() {
                       ) : (
                         payments.map((payment) => (
                           <tr key={payment.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
                               <p className="text-sm font-medium">{payment.transaction_id || 'N/A'}</p>
                               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                                 payment.payment_status === 'success'
@@ -287,22 +289,22 @@ export default function PaymentPage() {
                                 {payment.payment_status || 'UNKNOWN'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
                                 <p className="text-sm font-medium">{payment.customer_reference_id}</p>
                                 <p className="text-xs text-gray-500">{payment.meter_type}</p>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                            <td className="px-2 py-4 whitespace-nowrap text-gray-900">
                               <p className="text-sm font-medium">{payment.msisdn || ''}</p>
                               <p className="text-xs text-gray-500">{payment.payment_method || 'N/A'}</p>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 min-w-72">
+                            <td className="px-2 py-4 text-sm text-gray-500 min-w-72">
                               {payment.token || ''}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500 min-w-72">
-                              {payment.token_data && <p className="text-sm font-medium">P: {payment.token_data.passcode || ''}</p>}
-                              {payment.token_data && <p className="text-sm font-medium">L: {payment.token_data?.luku || ''}</p>}
+                            <td className="px-2 py-4 text-sm text-gray-500 min-w-72">
+                              {payment.token_data?.passcode && <p className="text-sm font-medium">P: {payment.token_data.passcode || ''}</p>}
+                              {payment.token_data?.luku && <p className="text-sm font-medium">L: {payment.token_data.luku || ''}</p>}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
                               {payment.transaction_date || 'N/A'}
                               <p className="text-xs text-gray-500">{payment.amount ? `TZS ${payment.amount.toLocaleString()}` : ''}</p>
                             </td>
