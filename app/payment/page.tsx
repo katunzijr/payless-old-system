@@ -19,6 +19,16 @@ interface Payment {
   payment_status_description: string | null
   token:                    string
   meter_type:              string
+  token_data?: {
+    id: number
+    txn_id: string
+    transaction_date: string
+    invoice_id: number
+    meter_id: number
+    passcode: string
+    luku: string
+    units: string
+  }
 //   transaction_type:        number
 //   company_name:            string
 //   customer_id:             number
@@ -131,7 +141,7 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-8xl mx-auto">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
@@ -235,10 +245,10 @@ export default function PaymentPage() {
                           SMS Token
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Amount
+                          Tokens
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Date
+                          Date/Amount
                         </th>
                       </tr>
                     </thead>
@@ -282,17 +292,19 @@ export default function PaymentPage() {
                                 <p className="text-xs text-gray-500">{payment.meter_type}</p>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                              <p className="text-sm font-medium">{payment.msisdn || 'N/A'}</p>
+                              <p className="text-sm font-medium">{payment.msisdn || ''}</p>
                               <p className="text-xs text-gray-500">{payment.payment_method || 'N/A'}</p>
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-500 min-w-72">
                               {payment.token || ''}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {payment.amount ? `TZS ${payment.amount.toLocaleString()}` : 'N/A'}
+                            <td className="px-6 py-4 text-sm text-gray-500 min-w-72">
+                              {payment.token_data && <p className="text-sm font-medium">P: {payment.token_data.passcode || ''}</p>}
+                              {payment.token_data && <p className="text-sm font-medium">L: {payment.token_data?.luku || ''}</p>}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                               {payment.transaction_date || 'N/A'}
+                              <p className="text-xs text-gray-500">{payment.amount ? `TZS ${payment.amount.toLocaleString()}` : ''}</p>
                             </td>
                           </tr>
                         ))

@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     // Get total count for pagination
     const totalCount = await prisma.tbl_mobile_payments.count({ where })
 
-    // Fetch payments from tbl_mobile_payments
+    // Fetch payments from tbl_mobile_payments with token data
     const payments = await prisma.tbl_mobile_payments.findMany({
       where,
       orderBy: {
@@ -58,13 +58,35 @@ export async function GET(req: NextRequest) {
       take: limit
     })
 
+    // Get token history data for the fetched payments
+    const transactionIds = payments
+      .map(p => p.transaction_id)
+      .filter((id): id is string => id !== null)
+
+    const tokenData = await prisma.token_history_data.findMany({
+      where: {
+        txn_id: {
+          in: transactionIds
+        }
+      }
+    })
+
+    // Create a map for quick lookup
+    const tokenMap = new Map(tokenData.map(t => [t.txn_id, t]))
+
+    // Merge the data
+    const paymentsWithTokens = payments.map(payment => ({
+      ...payment,
+      token_data: payment.transaction_id ? tokenMap.get(payment.transaction_id) || null : null
+    }))
+
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limit)
     const hasNextPage = page < totalPages
     const hasPreviousPage = page > 1
 
     return NextResponse.json({
-      payments,
+      payments: paymentsWithTokens,
       pagination: {
         currentPage: page,
         totalPages,
