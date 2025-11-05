@@ -113,6 +113,7 @@ export default function RefundPage() {
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    required
                   />
                 </div>
 
@@ -125,6 +126,7 @@ export default function RefundPage() {
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                     className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    required
                   />
                 </div>
 
@@ -136,6 +138,7 @@ export default function RefundPage() {
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    required 
                   >
                     <option value="">Select Method</option>
                     <option value="M-PESA">M-PESA</option>

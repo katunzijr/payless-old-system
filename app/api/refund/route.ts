@@ -48,7 +48,9 @@ export async function GET(req: NextRequest) {
       AND: [
         {
           transaction_id: {
-            not: null
+            not: {
+                startsWith: "PAYLESS"
+            }
           }
         },
         {
