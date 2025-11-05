@@ -24,12 +24,20 @@ export default function Navigation() {
                 Home
               </Link>
               {session && (
-                <Link
-                  href="/payment"
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
-                >
-                  Payment
-                </Link>
+                <>
+                  <Link
+                    href="/payment"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                  >
+                    Payment
+                  </Link>
+                  <Link
+                    href="/refund"
+                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                  >
+                    Refund
+                  </Link>
+                </>
               )}
             </div>
           </div>
