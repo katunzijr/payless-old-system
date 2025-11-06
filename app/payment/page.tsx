@@ -282,7 +282,7 @@ export default function PaymentPage() {
                           <tr key={payment.id} className="hover:bg-gray-50">
                             <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
                               <p className="text-sm font-medium">{payment.transaction_id || 'N/A'}</p>
-                              {payment.payment_status === 'SUCCESSFUL' || isValidToken(payment.token_data?.luku) ? <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-500">
+                              {payment.payment_status === 'SUCCESFUL' || isValidToken(payment.token_data?.luku) ? <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-50 text-green-500">
                                 SUCCESSFUL
                               </span> : <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-50 text-red-500">
                                 {payment.payment_status || 'UNKNOWN'}

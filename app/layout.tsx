@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Payless - Payment Platform',
-  description: 'Simple payment platform with authentication',
+  description: 'Seamless payment for payless transactions',
 }
 
 export default function RootLayout({

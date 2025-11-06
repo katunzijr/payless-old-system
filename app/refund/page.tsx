@@ -144,7 +144,7 @@ export default function RefundPage() {
                     <option value="M-PESA">M-PESA</option>
                     <option value="TIGO-PESA">TIGO-PESA</option>
                     <option value="AIRTEL-MONEY">AIRTEL-MONEY</option>
-                    <option value="SELCOM">SELCOM</option>
+                    <option value="SELCOM" disabled>SELCOM</option>
                   </select>
                 </div>
 
