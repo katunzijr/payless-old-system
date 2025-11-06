@@ -171,15 +171,27 @@ export default function RefundPage() {
       let transactionIds: string[] = []
       
       if (uploadPaymentMethod === 'M-PESA') {
-        // M-PESA column template (adjust based on actual template)
+        // M-PESA column template (case-insensitive)
         transactionIds = jsonData.map((row: any) => {
-          const id = row['ORDERID'] || row['orderid']
+          // Find the ORDERID column case-insensitively
+          const orderIdKey = Object.keys(row).find(key => 
+            key.toLowerCase() === 'orderid'
+          )
+          const id = orderIdKey ? row[orderIdKey] : null
           return id ? String(id).trim() : null
         }).filter(Boolean) as string[]
       } else if (uploadPaymentMethod === 'TIGO-PESA') {
-        // TIGO-PESA column template (adjust based on actual template)
+        // TIGO-PESA column template (case-insensitive)
         transactionIds = jsonData.map((row: any) => {
-          const id = row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID'] || row['transaction_id']
+          // Find the transaction ID column case-insensitively
+          const keys = Object.keys(row)
+          const orderKey = keys.find(key => {
+            const lowerKey = key.toLowerCase()
+            return lowerKey === 'sales_order_number' || 
+                   lowerKey === 'transfer_id' || 
+                   lowerKey === 'transaction_id'
+          })
+          const id = orderKey ? row[orderKey] : null
           return id ? String(id).trim() : null
         }).filter(Boolean) as string[]
       }
@@ -218,9 +230,21 @@ export default function RefundPage() {
         const markedData = jsonData.map((row: any) => {
           let transactionId = ''
           if (uploadPaymentMethod === 'M-PESA') {
-            transactionId = String(row['ORDERID'] || row['orderid'] || '').trim()
+            // Find ORDERID column case-insensitively
+            const orderIdKey = Object.keys(row).find(key => 
+              key.toLowerCase() === 'orderid'
+            )
+            transactionId = orderIdKey ? String(row[orderIdKey] || '').trim() : ''
           } else if (uploadPaymentMethod === 'TIGO-PESA') {
-            transactionId = String(row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID'] || row['transaction_id'] || '').trim()
+            // Find transaction ID column case-insensitively
+            const keys = Object.keys(row)
+            const orderKey = keys.find(key => {
+              const lowerKey = key.toLowerCase()
+              return lowerKey === 'sales_order_number' || 
+                     lowerKey === 'transfer_id' || 
+                     lowerKey === 'transaction_id'
+            })
+            transactionId = orderKey ? String(row[orderKey] || '').trim() : ''
           }
           
           return {
@@ -408,8 +432,8 @@ export default function RefundPage() {
                   <h4 className="text-sm font-medium text-blue-900 mb-2">File Requirements:</h4>
                   <ul className="text-xs text-blue-700 space-y-1">
                     <li>• <strong>Format:</strong> Excel (.xlsx, .xls) or CSV (.csv)</li>
-                    <li>• <strong>M-PESA:</strong> Must have column named ORDERID or orderid</li>
-                    <li>• <strong>TIGO-PESA:</strong> Must have column named SALES_ORDER_NUMBER or TRANSFER_ID or transaction_id</li>
+                    <li>• <strong>M-PESA:</strong> Must have column named <code>ORDERID</code> (case-insensitive)</li>
+                    <li>• <strong>TIGO-PESA:</strong> Must have column named <code>SALES_ORDER_NUMBER</code>, <code>TRANSFER_ID</code>, or <code>TRANSACTION_ID</code> (case-insensitive)</li>
                   </ul>
                 </div>
               </div>
