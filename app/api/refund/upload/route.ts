@@ -47,9 +47,7 @@ export async function POST(request: NextRequest) {
             payment_method: paymentMethod
           },
           {
-            payment_status: {
-              not: 'SUCCESFUL'
-            }
+            payment_status: 'NOT SUCCESFUL'
           }
         ]
       },

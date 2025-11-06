@@ -42,9 +42,7 @@ export async function GET(req: NextRequest) {
     // Build where clause for unsuccessful payments
     const where: any = {
       payment_method: paymentMethod,
-      payment_status: {
-        not: 'SUCCESFUL'
-      },
+      payment_status: 'NOT SUCCESFUL',
       AND: [
         {
           transaction_id: {
