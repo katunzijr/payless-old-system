@@ -22,7 +22,7 @@ type TabType = 'date-range' | 'upload'
 export default function RefundPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<TabType>('date-range')
+  const [activeTab, setActiveTab] = useState<TabType>('upload')
   
   // Date Range Tab State
   const [startDate, setStartDate] = useState('')
@@ -179,7 +179,7 @@ export default function RefundPage() {
       } else if (uploadPaymentMethod === 'TIGO-PESA') {
         // TIGO-PESA column template (adjust based on actual template)
         transactionIds = jsonData.map((row: any) => {
-          const id = row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID']
+          const id = row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID'] || row['transaction_id']
           return id ? String(id).trim() : null
         }).filter(Boolean) as string[]
       }
@@ -220,7 +220,7 @@ export default function RefundPage() {
           if (uploadPaymentMethod === 'M-PESA') {
             transactionId = String(row['ORDERID'] || row['orderid'] || '').trim()
           } else if (uploadPaymentMethod === 'TIGO-PESA') {
-            transactionId = String(row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID'] || '').trim()
+            transactionId = String(row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID'] || row['transaction_id'] || '').trim()
           }
           
           return {
@@ -253,22 +253,6 @@ export default function RefundPage() {
               <nav className="-mb-px flex space-x-8">
                 <button
                   onClick={() => {
-                    setActiveTab('date-range')
-                    setShowPreview(false)
-                    setError('')
-                    setPayments([])
-                    setUploadedData([])
-                  }}
-                  className={`${
-                    activeTab === 'date-range'
-                      ? 'border-indigo-500 text-indigo-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-                >
-                  Date Range Export
-                </button>
-                <button
-                  onClick={() => {
                     setActiveTab('upload')
                     setShowPreview(false)
                     setError('')
@@ -282,6 +266,22 @@ export default function RefundPage() {
                   } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
                 >
                   Upload File
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('date-range')
+                    setShowPreview(false)
+                    setError('')
+                    setPayments([])
+                    setUploadedData([])
+                  }}
+                  className={`${
+                    activeTab === 'date-range'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  Date Range Export
                 </button>
               </nav>
             </div>
@@ -409,7 +409,7 @@ export default function RefundPage() {
                   <ul className="text-xs text-blue-700 space-y-1">
                     <li>• <strong>Format:</strong> Excel (.xlsx, .xls) or CSV (.csv)</li>
                     <li>• <strong>M-PESA:</strong> Must have column named ORDERID or orderid</li>
-                    <li>• <strong>TIGO-PESA:</strong> Must have column named SALES_ORDER_NUMBER or TRANSFER_ID</li>
+                    <li>• <strong>TIGO-PESA:</strong> Must have column named SALES_ORDER_NUMBER or TRANSFER_ID or transaction_id</li>
                   </ul>
                 </div>
               </div>
