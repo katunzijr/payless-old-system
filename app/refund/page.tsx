@@ -12,12 +12,23 @@ interface RefundPayment {
   AMOUNT: number | null
 }
 
+type TabType = 'date-range' | 'upload'
+
 export default function RefundPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState<TabType>('date-range')
+  
+  // Date Range Tab State
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
+  
+  // Upload Tab State
+  const [uploadPaymentMethod, setUploadPaymentMethod] = useState('')
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  
+  // Common State
   const [payments, setPayments] = useState<RefundPayment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -88,10 +99,91 @@ export default function RefundPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Refunds')
 
     // Generate filename
-    const filename = `refunds_${paymentMethod}_${startDate}_${endDate}.xlsx`
+    const method = activeTab === 'date-range' ? paymentMethod : uploadPaymentMethod
+    const filename = activeTab === 'date-range' 
+      ? `refunds_${paymentMethod}_${startDate}_${endDate}.xlsx`
+      : `refunds_${uploadPaymentMethod}_upload.xlsx`
 
     // Download
     XLSX.writeFile(workbook, filename)
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadedFile(file)
+    setError('')
+    setShowPreview(false)
+  }
+
+  const processUploadedFile = async () => {
+    if (!uploadedFile || !uploadPaymentMethod) {
+      setError('Please select a payment method and upload a file')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+    setShowPreview(false)
+
+    try {
+      // Read Excel file
+      const data = await uploadedFile.arrayBuffer()
+      const workbook = XLSX.read(data)
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+      const jsonData = XLSX.utils.sheet_to_json(worksheet)
+
+      // Extract transaction IDs based on payment method
+      let transactionIds: string[] = []
+      
+      if (uploadPaymentMethod === 'M-PESA') {
+        // M-PESA column template (adjust based on actual template)
+        transactionIds = jsonData.map((row: any) => {
+          const id = row['ORDERID'] || row['orderid']
+          return id ? String(id).trim() : null
+        }).filter(Boolean) as string[]
+      } else if (uploadPaymentMethod === 'TIGO-PESA') {
+        // TIGO-PESA column template (adjust based on actual template)
+        transactionIds = jsonData.map((row: any) => {
+          const id = row['SALES_ORDER_NUMBER'] || row['sales_order_number']
+          return id ? String(id).trim() : null
+        }).filter(Boolean) as string[]
+      }
+
+      if (transactionIds.length === 0) {
+        setError('No transaction IDs found in the uploaded file')
+        setIsLoading(false)
+        return
+      }
+
+      // Send to API to check which ones are unsuccessful
+      const response = await fetch('/api/refund/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          transactionIds,
+          paymentMethod: uploadPaymentMethod
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        setError(result.error || 'Failed to process uploaded file')
+        setPayments([])
+      } else {
+        setPayments(result.payments || [])
+        setShowPreview(true)
+      }
+    } catch (error) {
+      setError('Error processing file')
+      setPayments([])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -101,63 +193,40 @@ export default function RefundPage() {
           <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Refund Export</h2>
 
-            {/* Filter Section */}
-            <div className="mb-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Payment Method
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    required 
-                  >
-                    <option value="">Select Method</option>
-                    <option value="M-PESA">M-PESA</option>
-                    <option value="TIGO-PESA">TIGO-PESA</option>
-                    <option value="AIRTEL-MONEY">AIRTEL-MONEY</option>
-                    <option value="SELCOM" disabled>SELCOM</option>
-                  </select>
-                </div>
-
-                <div className="flex items-end">
-                  <button
-                    onClick={fetchRefundData}
-                    disabled={isLoading}
-                    className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? 'Loading...' : 'Preview'}
-                  </button>
-                </div>
-              </div>
+            {/* Tabs */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => {
+                    setActiveTab('date-range')
+                    setShowPreview(false)
+                    setError('')
+                    setPayments([])
+                  }}
+                  className={`${
+                    activeTab === 'date-range'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  Date Range Export
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('upload')
+                    setShowPreview(false)
+                    setError('')
+                    setPayments([])
+                  }}
+                  className={`${
+                    activeTab === 'upload'
+                      ? 'border-indigo-500 text-indigo-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                >
+                  Upload File
+                </button>
+              </nav>
             </div>
 
             {error && (
@@ -166,10 +235,129 @@ export default function RefundPage() {
               </div>
             )}
 
+            {/* Tab Content */}
+            {activeTab === 'date-range' ? (
+              // Date Range Tab Content
+              <div className="mb-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Method
+                    </label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      required 
+                    >
+                      <option value="">Select Method</option>
+                      <option value="M-PESA">M-PESA</option>
+                      <option value="TIGO-PESA">TIGO-PESA</option>
+                      <option value="AIRTEL-MONEY">AIRTEL-MONEY</option>
+                      <option value="SELCOM" disabled>SELCOM</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-end">
+                    <button
+                      onClick={fetchRefundData}
+                      disabled={isLoading}
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? 'Loading...' : 'Preview'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Upload File Tab Content
+              <div className="mb-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Payment Method
+                    </label>
+                    <select
+                      value={uploadPaymentMethod}
+                      onChange={(e) => setUploadPaymentMethod(e.target.value)}
+                      className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                      required 
+                    >
+                      <option value="">Select Method</option>
+                      <option value="M-PESA">M-PESA</option>
+                      <option value="TIGO-PESA">TIGO-PESA</option>
+                    </select>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Only M-PESA and TIGO-PESA are supported for upload
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Upload Excel File
+                    </label>
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleFileUpload}
+                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {uploadedFile ? uploadedFile.name : 'No file selected'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    onClick={processUploadedFile}
+                    disabled={isLoading || !uploadedFile || !uploadPaymentMethod}
+                    className="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? 'Processing...' : 'Process File'}
+                  </button>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">Expected Columns:</h4>
+                  <ul className="text-xs text-blue-700 space-y-1">
+                    <li>• <strong>M-PESA:</strong> ORDERID, orderid</li>
+                    <li>• <strong>TIGO-PESA:</strong> SALES_ORDER_NUMBER, sales_order_number</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {/* Preview Section */}
             {showPreview && (
               <>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 pt-6 border-t border-gray-200">
                   <p className="text-sm text-gray-600">
                     Total Records: <span className="font-semibold">{payments.length}</span>
                   </p>
@@ -219,7 +407,7 @@ export default function RefundPage() {
                         <tr>
                           <td colSpan={4} className="px-6 py-12 text-center">
                             <p className="text-sm text-gray-500">
-                              No unsuccessful payments found for the selected criteria
+                              No unsuccessful payments found
                             </p>
                           </td>
                         </tr>
