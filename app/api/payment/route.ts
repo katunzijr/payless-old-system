@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
+    const date = searchParams.get('date') || ''
+    const paymentMethod = searchParams.get('paymentMethod') || ''
     
     // Calculate skip for pagination
     const skip = (page - 1) * limit
@@ -43,6 +45,27 @@ export async function GET(req: NextRequest) {
     // Filter by status
     if (status) {
       where.payment_status = status
+    }
+
+    // Filter by date
+    if (date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        console.log(`Filtering payments from ${startOfDay.toISOString()} to ${endOfDay.toISOString()}`);
+
+        where.transaction_date = {
+            gte: startOfDay.toISOString().split("T")[0],
+            lte: endOfDay.toISOString().split("T")[0],
+        };
+    }
+
+    // Filter by payment method
+    if (paymentMethod) {
+      where.payment_method = paymentMethod
     }
 
     // Get total count for pagination

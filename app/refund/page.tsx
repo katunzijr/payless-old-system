@@ -179,7 +179,7 @@ export default function RefundPage() {
       } else if (uploadPaymentMethod === 'TIGO-PESA') {
         // TIGO-PESA column template (adjust based on actual template)
         transactionIds = jsonData.map((row: any) => {
-          const id = row['SALES_ORDER_NUMBER'] || row['sales_order_number']
+          const id = row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID']
           return id ? String(id).trim() : null
         }).filter(Boolean) as string[]
       }
@@ -220,7 +220,7 @@ export default function RefundPage() {
           if (uploadPaymentMethod === 'M-PESA') {
             transactionId = String(row['ORDERID'] || row['orderid'] || '').trim()
           } else if (uploadPaymentMethod === 'TIGO-PESA') {
-            transactionId = String(row['SALES_ORDER_NUMBER'] || row['sales_order_number'] || '').trim()
+            transactionId = String(row['SALES_ORDER_NUMBER'] || row['TRANSFER_ID'] || '').trim()
           }
           
           return {
@@ -409,7 +409,7 @@ export default function RefundPage() {
                   <ul className="text-xs text-blue-700 space-y-1">
                     <li>• <strong>Format:</strong> Excel (.xlsx, .xls) or CSV (.csv)</li>
                     <li>• <strong>M-PESA:</strong> Must have column named ORDERID or orderid</li>
-                    <li>• <strong>TIGO-PESA:</strong> Must have column named SALES_ORDER_NUMBER or sales_order_number</li>
+                    <li>• <strong>TIGO-PESA:</strong> Must have column named SALES_ORDER_NUMBER or TRANSFER_ID</li>
                   </ul>
                 </div>
               </div>

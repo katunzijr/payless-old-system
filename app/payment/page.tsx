@@ -63,6 +63,8 @@ export default function PaymentPage() {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState('')
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('')
   const [pageSize, setPageSize] = useState(10)
 
   if (status === 'unauthenticated') {
@@ -70,7 +72,14 @@ export default function PaymentPage() {
     return null
   }
 
-  const fetchPayments = useCallback(async (page: number = 1, search: string = '', status: string = '', limit: number = 10) => {
+  const fetchPayments = useCallback(async (
+    page: number = 1, 
+    search: string = '', 
+    status: string = '', 
+    limit: number = 10,
+    date: string = '',
+    paymentMethod: string = ''
+  ) => {
     setIsLoading(true)
     setError('')
 
@@ -79,7 +88,9 @@ export default function PaymentPage() {
         page: page.toString(),
         limit: limit.toString(),
         ...(search && { search }),
-        ...(status && { status })
+        ...(status && { status }),
+        ...(date && { date }),
+        ...(paymentMethod && { paymentMethod })
       })
 
       const response = await fetch(`/api/payment?${params}`)
@@ -100,12 +111,12 @@ export default function PaymentPage() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchPayments(1, searchTerm, statusFilter, pageSize)
+      fetchPayments(1, searchTerm, statusFilter, pageSize, dateFilter, paymentMethodFilter)
     }
-  }, [status, searchTerm, statusFilter, pageSize, fetchPayments])
+  }, [status, searchTerm, statusFilter, pageSize, dateFilter, paymentMethodFilter, fetchPayments])
 
   const handlePageChange = (page: number) => {
-    fetchPayments(page, searchTerm, statusFilter, pageSize)
+    fetchPayments(page, searchTerm, statusFilter, pageSize, dateFilter, paymentMethodFilter)
   }
 
   const handleSearch = (search: string) => {
@@ -116,12 +127,20 @@ export default function PaymentPage() {
     setStatusFilter(status)
   }
 
+  const handleDateFilter = (date: string) => {
+    setDateFilter(date)
+  }
+
+  const handlePaymentMethodFilter = (method: string) => {
+    setPaymentMethodFilter(method)
+  }
+
   const handlePageSizeChange = (size: number) => {
     setPageSize(size)
   }
 
   const handleRefresh = () => {
-    fetchPayments(pagination.currentPage, searchTerm, statusFilter, pageSize)
+    fetchPayments(pagination.currentPage, searchTerm, statusFilter, pageSize, dateFilter, paymentMethodFilter)
   }
 
   if (status === 'loading') {
@@ -180,26 +199,48 @@ export default function PaymentPage() {
                   />
                 </div>
                 
-                <select
-                  value={statusFilter}
-                  onChange={(e) => handleStatusFilter(e.target.value)}
-                  className="block w-full md:w-auto md:max-w-[200px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                >
-                  <option value="">All Statuses</option>
-                  <option value="SUCCESFUL">Success</option>
-                  <option value="NOT SUCCESFUL">Failed</option>
-                </select>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => handleDateFilter(e.target.value)}
+                    className="block w-full md:w-auto rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    title="Filter by date"
+                  />
 
-                <select
-                  value={pageSize}
-                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className="block w-full md:w-auto md:max-w-[200px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                >
-                  <option value={10}>10 per page</option>
-                  <option value={20}>20 per page</option>
-                  <option value={30}>30 per page</option>
-                  <option value={50}>50 per page</option>
-                </select>
+                  <select
+                    value={paymentMethodFilter}
+                    onChange={(e) => handlePaymentMethodFilter(e.target.value)}
+                    className="block w-full md:w-auto md:min-w-[150px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  >
+                    <option value="">All Methods</option>
+                    <option value="M-PESA">M-PESA</option>
+                    <option value="TIGO-PESA">TIGO-PESA</option>
+                    <option value="AIRTEL-MONEY">AIRTEL-MONEY</option>
+                    <option value="SELCOM">SELCOM</option>
+                  </select>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => handleStatusFilter(e.target.value)}
+                    className="block w-full md:w-auto md:min-w-[150px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="SUCCESFUL">Success</option>
+                    <option value="NOT SUCCESFUL">Failed</option>
+                  </select>
+
+                  <select
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                    className="block w-full md:w-auto md:min-w-[120px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  >
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                    <option value={30}>30 per page</option>
+                    <option value={50}>50 per page</option>
+                  </select>
+                </div>
               </div>
               
               {/* Results count */}
@@ -207,11 +248,13 @@ export default function PaymentPage() {
                 <span>
                   Showing {payments.length} of {pagination.totalCount} payments
                 </span>
-                {(searchTerm || statusFilter) && (
+                {(searchTerm || statusFilter || dateFilter || paymentMethodFilter) && (
                   <button
                     onClick={() => {
                       setSearchTerm('')
                       setStatusFilter('')
+                      setDateFilter('')
+                      setPaymentMethodFilter('')
                     }}
                     className="text-indigo-600 hover:text-indigo-800 font-medium"
                   >
