@@ -12,6 +12,11 @@ interface RefundPayment {
   AMOUNT: number | null
 }
 
+interface UploadedRow {
+  [key: string]: any
+  isUnsuccessful?: boolean
+}
+
 type TabType = 'date-range' | 'upload'
 
 export default function RefundPage() {
@@ -27,6 +32,7 @@ export default function RefundPage() {
   // Upload Tab State
   const [uploadPaymentMethod, setUploadPaymentMethod] = useState('')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadedData, setUploadedData] = useState<UploadedRow[]>([])
   
   // Common State
   const [payments, setPayments] = useState<RefundPayment[]>([])
@@ -113,6 +119,7 @@ export default function RefundPage() {
     if (!file) return
 
     setUploadedFile(file)
+    setUploadedData([])
     setError('')
     setShowPreview(false)
   }
@@ -174,7 +181,29 @@ export default function RefundPage() {
       if (!response.ok) {
         setError(result.error || 'Failed to process uploaded file')
         setPayments([])
+        setUploadedData([])
       } else {
+        // Get unsuccessful transaction IDs
+        const unsuccessfulIds = new Set(
+          result.payments.map((p: RefundPayment) => p.TRANSACTION_ID)
+        )
+
+        // Mark rows as unsuccessful or successful
+        const markedData = jsonData.map((row: any) => {
+          let transactionId = ''
+          if (uploadPaymentMethod === 'M-PESA') {
+            transactionId = String(row['ORDERID'] || row['orderid'] || '').trim()
+          } else if (uploadPaymentMethod === 'TIGO-PESA') {
+            transactionId = String(row['SALES_ORDER_NUMBER'] || row['sales_order_number'] || '').trim()
+          }
+          
+          return {
+            ...row,
+            isUnsuccessful: unsuccessfulIds.has(transactionId)
+          }
+        })
+
+        setUploadedData(markedData)
         setPayments(result.payments || [])
         setShowPreview(true)
       }
@@ -202,6 +231,7 @@ export default function RefundPage() {
                     setShowPreview(false)
                     setError('')
                     setPayments([])
+                    setUploadedData([])
                   }}
                   className={`${
                     activeTab === 'date-range'
@@ -217,6 +247,7 @@ export default function RefundPage() {
                     setShowPreview(false)
                     setError('')
                     setPayments([])
+                    setUploadedData([])
                   }}
                   className={`${
                     activeTab === 'upload'
@@ -359,7 +390,17 @@ export default function RefundPage() {
               <>
                 <div className="flex items-center justify-between mb-4 pt-6 border-t border-gray-200">
                   <p className="text-sm text-gray-600">
-                    Total Records: <span className="font-semibold">{payments.length}</span>
+                    {activeTab === 'upload' ? (
+                      <>
+                        Total Rows: <span className="font-semibold">{uploadedData.length}</span>
+                        {' | '}
+                        Unsuccessful: <span className="font-semibold text-red-600">{payments.length}</span>
+                      </>
+                    ) : (
+                      <>
+                        Total Records: <span className="font-semibold">{payments.length}</span>
+                      </>
+                    )}
                   </p>
                   <button
                     onClick={downloadExcel}
@@ -384,56 +425,112 @@ export default function RefundPage() {
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          TRANSACTION_ID
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          MSISDN
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          STATUS
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          AMOUNT
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {payments.length === 0 ? (
+                {activeTab === 'upload' && uploadedData.length > 0 ? (
+                  // Upload Tab - Show original Excel data with unsuccessful rows highlighted
+                  <div className="overflow-x-auto">
+                    <div className="mb-2 text-xs text-gray-600 flex items-center gap-2">
+                      <span className="inline-flex items-center">
+                        <span className="w-4 h-4 bg-red-100 border border-red-300 mr-1"></span>
+                        Unsuccessful payments (will be exported)
+                      </span>
+                      <span className="inline-flex items-center ml-4">
+                        <span className="w-4 h-4 bg-white border border-gray-300 mr-1"></span>
+                        Successful or not found
+                      </span>
+                    </div>
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
                         <tr>
-                          <td colSpan={4} className="px-6 py-12 text-center">
-                            <p className="text-sm text-gray-500">
-                              No unsuccessful payments found
-                            </p>
-                          </td>
+                          {uploadedData.length > 0 && Object.keys(uploadedData[0])
+                            .filter(key => key !== 'isUnsuccessful')
+                            .map((header, index) => (
+                              <th 
+                                key={index}
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                              >
+                                {header}
+                              </th>
+                            ))
+                          }
                         </tr>
-                      ) : (
-                        payments.map((payment, index) => (
-                          <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {payment.TRANSACTION_ID || 'N/A'}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {payment.MSISDN || ''}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm">
-                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                {payment.STATUS || 'UNKNOWN'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                              {payment.AMOUNT ? `${payment.AMOUNT.toLocaleString()}` : ''}
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {uploadedData.map((row, rowIndex) => (
+                          <tr 
+                            key={rowIndex} 
+                            className={row.isUnsuccessful ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}
+                          >
+                            {Object.entries(row)
+                              .filter(([key]) => key !== 'isUnsuccessful')
+                              .map(([key, value], cellIndex) => (
+                                <td 
+                                  key={cellIndex}
+                                  className={`px-6 py-4 whitespace-nowrap text-sm ${
+                                    row.isUnsuccessful ? 'text-gray-900 font-medium' : 'text-gray-700'
+                                  }`}
+                                >
+                                  {value !== null && value !== undefined ? String(value) : ''}
+                                </td>
+                              ))
+                            }
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  // Date Range Tab - Show standard refund data
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            TRANSACTION_ID
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            MSISDN
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            STATUS
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            AMOUNT
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {payments.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-12 text-center">
+                              <p className="text-sm text-gray-500">
+                                No unsuccessful payments found
+                              </p>
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        ) : (
+                          payments.map((payment, index) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {payment.TRANSACTION_ID || 'N/A'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {payment.MSISDN || ''}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                  {payment.STATUS || 'UNKNOWN'}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {payment.AMOUNT ? `${payment.AMOUNT.toLocaleString()}` : ''}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </>
             )}
           </div>
