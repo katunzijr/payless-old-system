@@ -200,13 +200,13 @@ export default function PaymentPage() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row gap-4">
-                  <input
+                  {/* <input
                     type="date"
                     value={dateFilter}
                     onChange={(e) => handleDateFilter(e.target.value)}
                     className="block w-full md:w-auto rounded-md border-0 py-2 px-3 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
                     title="Filter by date"
-                  />
+                  /> */}
 
                   <select
                     value={paymentMethodFilter}

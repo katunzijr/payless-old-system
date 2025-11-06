@@ -464,7 +464,7 @@ export default function RefundPage() {
                         Unsuccessful payments (will be exported)
                       </span>
                       <span className="inline-flex items-center ml-4">
-                        <span className="w-4 h-4 bg-white border border-gray-300 mr-1"></span>
+                        <span className="w-4 h-4 bg-green-100 border border-green-300 mr-1"></span>
                         Successful or not found
                       </span>
                     </div>
@@ -488,7 +488,7 @@ export default function RefundPage() {
                         {uploadedData.map((row, rowIndex) => (
                           <tr 
                             key={rowIndex} 
-                            className={row.isUnsuccessful ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'}
+                            className={row.isUnsuccessful ? 'bg-red-50 hover:bg-red-100' : 'bg-green-100 hover:bg-green-100'}
                           >
                             {Object.entries(row)
                               .filter(([key]) => key !== 'isUnsuccessful')
