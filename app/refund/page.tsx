@@ -152,14 +152,57 @@ export default function RefundPage() {
         const text = await uploadedFile.text()
         const workbook = XLSX.read(text, { type: 'string' })
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        jsonData = XLSX.utils.sheet_to_json(worksheet)
+        jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' })
       } else {
         // Read Excel file (.xlsx, .xls)
         const data = await uploadedFile.arrayBuffer()
-        const workbook = XLSX.read(data)
+        const workbook = XLSX.read(data, { cellDates: true })
         const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-        jsonData = XLSX.utils.sheet_to_json(worksheet)
+        jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' })
       }
+
+      // Format dates properly in the data
+      jsonData = jsonData.map((row: any) => {
+        const formattedRow: any = {}
+        for (const [key, value] of Object.entries(row)) {
+          if (value instanceof Date) {
+            // Format date as readable string
+            formattedRow[key] = value.toLocaleString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false
+            })
+          } else if (
+            typeof value === 'number' 
+            && key.toLowerCase().includes('date') 
+            // || key.toLowerCase().includes('time')
+          ) {
+            // Handle Excel date serial numbers
+            const excelDate = XLSX.SSF.parse_date_code(value)
+            if (excelDate) {
+              const date = new Date(excelDate.y, excelDate.m - 1, excelDate.d, excelDate.H || 0, excelDate.M || 0, excelDate.S || 0)
+              formattedRow[key] = date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+              })
+            } else {
+              formattedRow[key] = value
+            }
+          } else {
+            formattedRow[key] = value
+          }
+        }
+        return formattedRow
+      })
 
       if (jsonData.length === 0) {
         setError('The uploaded file is empty')

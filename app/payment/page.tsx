@@ -66,6 +66,8 @@ export default function PaymentPage() {
   const [dateFilter, setDateFilter] = useState('')
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('')
   const [pageSize, setPageSize] = useState(10)
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   if (status === 'unauthenticated') {
     router.push('/login')
@@ -143,6 +145,45 @@ export default function PaymentPage() {
     fetchPayments(pagination.currentPage, searchTerm, statusFilter, pageSize, dateFilter, paymentMethodFilter)
   }
 
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000) // Auto-hide after 3 seconds
+  }
+
+  const handleCopySMSToken = (token: string) => {
+    if (token) {
+      navigator.clipboard.writeText(token).then(() => {
+        showToast('SMS copied to clipboard!')
+      }).catch(() => {
+        showToast('Failed to copy SMS', 'error')
+      })
+    }
+    setOpenDropdown(null)
+  }
+
+  const handleCopyTokens = (payment: Payment) => {
+    const tokens: string[] = []
+    if (payment.meter_type == "DOMESTIC") {
+        if (payment.token_data?.luku) tokens.push(`MUHIMU SANA ANZA KUWEKA LUKU: \n${payment.token_data.luku}\n`)
+        if (payment.token_data?.passcode) tokens.push(`MALIZIA KUWEKA PASSCODE: \n${payment.token_data.passcode}\n`)
+        if (payment.customer_reference_id) tokens.push(`Mita # ${payment.customer_reference_id} \nRisiti: ${payment.transaction_id} \nKiasi: TZS ${payment.amount}`)
+        if (payment.token_data?.units) tokens.push(`Units: ${payment.token_data.units}\n`)
+        tokens.push(`** Tupigie Simu 0777901467 au 0750013030 **`)
+    } else {
+        if (payment.token_data?.passcode) tokens.push(`Token: ${payment.token_data.passcode} \nMeter # 0179002253443 \nReceipt: ${payment.transaction_id} \nAmount: ${payment.amount} \nUnits: ${payment.token_data.units}kWh \n\n**Contact Us 0750013030 or 0750013030 **`)
+    }
+
+    if (tokens.length > 0) {
+      const tokenText = tokens.join('\n')
+      navigator.clipboard.writeText(tokenText).then(() => {
+        showToast('Tokens copied to clipboard!')
+      }).catch(() => {
+        showToast('Failed to copy tokens', 'error')
+      })
+    }
+    setOpenDropdown(null)
+  }
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -161,6 +202,44 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className={`rounded-lg shadow-lg p-4 max-w-sm ${
+            toast.type === 'success' 
+              ? 'bg-green-50 border border-green-200' 
+              : 'bg-red-50 border border-red-200'
+          }`}>
+            <div className="flex items-center">
+              {toast.type === 'success' ? (
+                <svg className="w-5 h-5 text-green-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-red-600 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              )}
+              <p className={`text-sm font-medium ${
+                toast.type === 'success' ? 'text-green-800' : 'text-red-800'
+              }`}>
+                {toast.message}
+              </p>
+              <button
+                onClick={() => setToast(null)}
+                className="ml-auto pl-3"
+              >
+                <svg className={`w-4 h-4 ${
+                  toast.type === 'success' ? 'text-green-600' : 'text-red-600'
+                }`} fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto">
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="p-6">
@@ -296,12 +375,15 @@ export default function PaymentPage() {
                         <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Date/Amount
                         </th>
+                        <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {payments.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-6 py-12 text-center">
+                          <td colSpan={7} className="px-6 py-12 text-center">
                             <svg 
                               className="mx-auto h-12 w-12 text-gray-400" 
                               fill="none" 
@@ -348,7 +430,89 @@ export default function PaymentPage() {
                             </td>
                             <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900">
                               {payment.transaction_date || 'N/A'}
-                              <p className="text-xs text-gray-500">{payment.amount ? `TZS ${payment.amount.toLocaleString()}` : ''}</p>
+                              <p className="text-xs text-gray-500">{payment.amount ? `TZS ${payment.amount.toLocaleString()}` : ''} {payment.token_data?.units ? `(${payment.token_data.units} units)` : ''}</p>
+                            </td>
+                            <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-900 text-center">
+                              <div className="relative">
+                                <button
+                                  onClick={() => setOpenDropdown(openDropdown === payment.id ? null : payment.id)}
+                                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                  title="Actions"
+                                >
+                                  <svg 
+                                    className="w-5 h-5 text-gray-600" 
+                                    fill="currentColor" 
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                  </svg>
+                                </button>
+                                
+                                {openDropdown === payment.id && (
+                                  <>
+                                    <div 
+                                      className="fixed inset-0 z-10" 
+                                      onClick={() => setOpenDropdown(null)}
+                                    ></div>
+                                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20">
+                                      <div className="py-1">
+                                        <button
+                                          onClick={() => handleCopySMSToken(payment.token)}
+                                          disabled={!payment.token}
+                                          className={`block w-full text-left px-4 py-2 text-sm ${
+                                            payment.token 
+                                              ? 'text-gray-700 hover:bg-gray-100' 
+                                              : 'text-gray-400 cursor-not-allowed'
+                                          }`}
+                                        >
+                                          <div className="flex items-center">
+                                            <svg 
+                                              className="w-4 h-4 mr-2" 
+                                              fill="none" 
+                                              stroke="currentColor" 
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" 
+                                              />
+                                            </svg>
+                                            Copy SMS Token
+                                          </div>
+                                        </button>
+                                        <button
+                                          onClick={() => handleCopyTokens(payment)}
+                                          disabled={!payment.token_data?.passcode && !payment.token_data?.luku}
+                                          className={`block w-full text-left px-4 py-2 text-sm ${
+                                            payment.token_data?.passcode || payment.token_data?.luku
+                                              ? 'text-gray-700 hover:bg-gray-100' 
+                                              : 'text-gray-400 cursor-not-allowed'
+                                          }`}
+                                        >
+                                          <div className="flex items-center">
+                                            <svg 
+                                              className="w-4 h-4 mr-2" 
+                                              fill="none" 
+                                              stroke="currentColor" 
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path 
+                                                strokeLinecap="round" 
+                                                strokeLinejoin="round" 
+                                                strokeWidth={2} 
+                                                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" 
+                                              />
+                                            </svg>
+                                            Copy Tokens (P & L)
+                                          </div>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))
