@@ -118,6 +118,15 @@ export default function RefundPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file type
+    const fileExtension = file.name.split('.').pop()?.toLowerCase()
+    const validExtensions = ['xlsx', 'xls', 'csv']
+    
+    if (!fileExtension || !validExtensions.includes(fileExtension)) {
+      setError('Invalid file type. Please upload an Excel (.xlsx, .xls) or CSV (.csv) file.')
+      return
+    }
+
     setUploadedFile(file)
     setUploadedData([])
     setError('')
@@ -135,11 +144,28 @@ export default function RefundPage() {
     setShowPreview(false)
 
     try {
-      // Read Excel file
-      const data = await uploadedFile.arrayBuffer()
-      const workbook = XLSX.read(data)
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-      const jsonData = XLSX.utils.sheet_to_json(worksheet)
+      let jsonData: any[] = []
+      const fileExtension = uploadedFile.name.split('.').pop()?.toLowerCase()
+
+      if (fileExtension === 'csv') {
+        // Read CSV file
+        const text = await uploadedFile.text()
+        const workbook = XLSX.read(text, { type: 'string' })
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+        jsonData = XLSX.utils.sheet_to_json(worksheet)
+      } else {
+        // Read Excel file (.xlsx, .xls)
+        const data = await uploadedFile.arrayBuffer()
+        const workbook = XLSX.read(data)
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+        jsonData = XLSX.utils.sheet_to_json(worksheet)
+      }
+
+      if (jsonData.length === 0) {
+        setError('The uploaded file is empty')
+        setIsLoading(false)
+        return
+      }
 
       // Extract transaction IDs based on payment method
       let transactionIds: string[] = []
@@ -351,16 +377,19 @@ export default function RefundPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Upload Excel File
+                      Upload File
                     </label>
                     <input
                       type="file"
-                      accept=".xlsx,.xls"
+                      accept=".xlsx,.xls,.csv"
                       onChange={handleFileUpload}
                       className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none"
                     />
                     <p className="mt-1 text-xs text-gray-500">
                       {uploadedFile ? uploadedFile.name : 'No file selected'}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-400">
+                      Accepted formats: Excel (.xlsx, .xls) or CSV (.csv)
                     </p>
                   </div>
                 </div>
@@ -376,10 +405,11 @@ export default function RefundPage() {
                 </div>
 
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-                  <h4 className="text-sm font-medium text-blue-900 mb-2">Expected Columns:</h4>
+                  <h4 className="text-sm font-medium text-blue-900 mb-2">File Requirements:</h4>
                   <ul className="text-xs text-blue-700 space-y-1">
-                    <li>• <strong>M-PESA:</strong> ORDERID, orderid</li>
-                    <li>• <strong>TIGO-PESA:</strong> SALES_ORDER_NUMBER, sales_order_number</li>
+                    <li>• <strong>Format:</strong> Excel (.xlsx, .xls) or CSV (.csv)</li>
+                    <li>• <strong>M-PESA:</strong> Must have column named ORDERID or orderid</li>
+                    <li>• <strong>TIGO-PESA:</strong> Must have column named SALES_ORDER_NUMBER or sales_order_number</li>
                   </ul>
                 </div>
               </div>
