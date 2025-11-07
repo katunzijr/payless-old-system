@@ -575,7 +575,7 @@ export default function PaymentPage() {
                                       index >= payments.length - 2 ? 'bottom-full mb-2' : 'mt-2'
                                     }`}>
                                       <div className="py-1">
-                                        <button
+                                        {(payment.token?.startsWith("Token:") || payment.token.startsWith("MUHIMU")) && <button
                                           onClick={() => handleCopySMSToken(payment.token)}
                                           disabled={!payment.token}
                                           className={`block w-full text-left px-4 py-2 text-sm ${
@@ -600,8 +600,8 @@ export default function PaymentPage() {
                                             </svg>
                                             Copy SMS Token
                                           </div>
-                                        </button>
-                                        <button
+                                        </button>}
+                                        {payment.token_data?.passcode &&<button
                                           onClick={() => handleCopyTokens(payment)}
                                           disabled={!payment.token_data?.passcode && !payment.token_data?.luku}
                                           className={`block w-full text-left px-4 py-2 text-sm ${
@@ -611,7 +611,7 @@ export default function PaymentPage() {
                                           }`}
                                         >
                                           <div className="flex items-center">
-                                            <svg 
+                                            <svg
                                               className="w-4 h-4 mr-2" 
                                               fill="none" 
                                               stroke="currentColor" 
@@ -624,9 +624,9 @@ export default function PaymentPage() {
                                                 d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" 
                                               />
                                             </svg>
-                                            Copy Tokens (P & L)
+                                            Copy Tokens as SMS
                                           </div>
-                                        </button>
+                                        </button>}
                                         <button
                                           onClick={() => handleResendSMS(payment)}
                                           disabled={!payment.token_data?.passcode && !payment.token_data?.luku}

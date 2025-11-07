@@ -44,18 +44,6 @@ export interface PaginationQuery {
   limit?: number;
 }
 
-export interface HealthCheck {
-  status: string;
-  timestamp: string;
-  uptime: number;
-  version: string;
-  environment: string;
-  database?: {
-    status: string;
-    type: string;
-  };
-}
-
 export type SortOrder = 'asc' | 'desc';
 
 export interface ErrorResponse {
