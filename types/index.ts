@@ -1,5 +1,4 @@
 // Re-export all feature types  
-export * from '../features/auth/types';
 
 // Validation error types
 export interface ValidationError {
