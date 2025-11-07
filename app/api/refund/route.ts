@@ -73,9 +73,6 @@ export async function GET(req: NextRequest) {
         payment_status: true,
         amount: true
       },
-      orderBy: {
-        id: 'desc'
-      }
     })
 
     // Get transaction IDs to fetch token data
@@ -91,7 +88,6 @@ export async function GET(req: NextRequest) {
         }
       },
       select: {
-        id: true,
         txn_id: true,
         luku: true
       }

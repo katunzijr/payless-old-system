@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
         ]
       },
       select: {
-        id: true,
         transaction_id: true,
         msisdn: true,
         payment_status: true,
@@ -61,32 +60,34 @@ export async function POST(request: NextRequest) {
     })
 
     // Get payment IDs to check against token history
-    const paymentIds = payments.map(p => p.id)
+    const paymentIds = payments
+        .map(p => p.transaction_id)
+        .filter((transaction_id): transaction_id is string => transaction_id !== null && transaction_id !== "");
 
     // Fetch token history for these payments
     const tokenHistory = await prisma.token_history_data.findMany({
       where: {
-        id: {
+        txn_id: {
           in: paymentIds
         }
       },
       select: {
-        id: true,
+        txn_id: true,
         luku: true
       }
     })
 
     // Create a Set of payment IDs that have valid tokens
-    const paymentsWithValidTokens = new Set<number>()
+    const paymentsWithValidTokens = new Set<string>()
     tokenHistory.forEach(token => {
       if (token.luku && isValidToken(token.luku)) {
-        paymentsWithValidTokens.add(token.id)
+        paymentsWithValidTokens.add(token.txn_id)
       }
     })
 
     // Filter out payments that have valid tokens
     const unsuccessfulPayments = payments
-      .filter(payment => !paymentsWithValidTokens.has(payment.id))
+      .filter(payment => !paymentsWithValidTokens.has(payment.transaction_id || ''))
       .map(payment => ({
         TRANSACTION_ID: payment.transaction_id,
         MSISDN: payment.msisdn,

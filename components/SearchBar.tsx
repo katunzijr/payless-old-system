@@ -11,7 +11,7 @@ interface SearchBarProps {
 export default function SearchBar({ 
   onSearch, 
   placeholder = 'Search...', 
-  debounceMs = 500 
+  debounceMs = 1000 
 }: SearchBarProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
