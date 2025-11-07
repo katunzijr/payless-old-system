@@ -89,7 +89,8 @@ export async function GET(req: NextRequest) {
       },
       select: {
         txn_id: true,
-        luku: true
+        luku: true,
+        passcode: true
       }
     })
 
@@ -103,6 +104,9 @@ export async function GET(req: NextRequest) {
       if (token?.luku && isValidToken(token.luku)) {
         return false
       }
+      if (token?.passcode && isValidToken(token.passcode)) {
+        return false
+      }
       return true
     })
 
@@ -111,7 +115,7 @@ export async function GET(req: NextRequest) {
       TRANSACTION_ID: payment.transaction_id || 'N/A',
       MSISDN: payment.msisdn || '',
       STATUS: payment.payment_status || 'UNKNOWN',
-      AMOUNT: payment.amount || 0
+      AMOUNT: payment.amount || 0,
     }))
 
     return NextResponse.json({
