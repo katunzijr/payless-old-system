@@ -217,9 +217,16 @@ export default function RefundPage() {
         // M-PESA column template (case-insensitive)
         transactionIds = jsonData.map((row: any) => {
           // Find the ORDERID column case-insensitively
-          const orderIdKey = Object.keys(row).find(key => 
-            key.toLowerCase() === 'orderid'
-          )
+        //   const orderIdKey = Object.keys(row).find(key => 
+        //     key.toLowerCase() === 'orderid'
+        //   )
+            const keys = Object.keys(row)
+            const orderIdKey = keys.find(key => {
+              const lowerKey = key.toLowerCase()
+              return lowerKey === 'orderid' || 
+                     lowerKey === 'receipt no.' || 
+                     lowerKey === 'receipt no'
+            })
           const id = orderIdKey ? row[orderIdKey] : null
           return id ? String(id).trim() : null
         }).filter(Boolean) as string[]
@@ -482,7 +489,7 @@ export default function RefundPage() {
                   <h4 className="text-sm font-medium text-blue-900 mb-2">File Requirements:</h4>
                   <ul className="text-xs text-blue-700 space-y-1">
                     <li>• <strong>Format:</strong> Excel (.xlsx, .xls) or CSV (.csv)</li>
-                    <li>• <strong>M-PESA:</strong> Must have column named <code>ORDERID</code> (case-insensitive)</li>
+                    <li>• <strong>M-PESA:</strong> Must have column named <code>ORDERID</code>, <code>RECEIPT NO.</code> (case-insensitive)</li>
                     <li>• <strong>TIGO-PESA:</strong> Must have column named <code>SALES_ORDER_NUMBER</code>, <code>TRANSFER_ID</code>, or <code>TRANSACTION_ID</code> (case-insensitive)</li>
                   </ul>
                 </div>
