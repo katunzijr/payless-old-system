@@ -420,8 +420,8 @@ export default function PaymentPage() {
                     className="block w-full md:w-auto md:min-w-[150px] rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
                   >
                     <option value="">All Statuses</option>
-                    <option value="SUCCESFUL">Success</option>
-                    <option value="NOT SUCCESFUL">Failed</option>
+                    <option value="SUCCESFUL" disabled>Success</option>
+                    <option value="NOT SUCCESFUL" disabled>Failed</option>
                   </select>
 
                   <select

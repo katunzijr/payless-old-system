@@ -274,9 +274,16 @@ export default function RefundPage() {
           let transactionId = ''
           if (uploadPaymentMethod === 'M-PESA') {
             // Find ORDERID column case-insensitively
-            const orderIdKey = Object.keys(row).find(key => 
-              key.toLowerCase() === 'orderid'
-            )
+            // const orderIdKey = Object.keys(row).find(key => 
+            //   key.toLowerCase() === 'orderid'
+            // )
+            const keys = Object.keys(row)
+            const orderIdKey = keys.find(key => {
+              const lowerKey = key.toLowerCase()
+              return lowerKey === 'orderid' || 
+                     lowerKey === 'receipt no.' || 
+                     lowerKey === 'receipt no'
+            })
             transactionId = orderIdKey ? String(row[orderIdKey] || '').trim() : ''
           } else if (uploadPaymentMethod === 'TIGO-PESA') {
             // Find transaction ID column case-insensitively

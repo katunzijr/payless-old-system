@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
           transaction_id: {
             not: ''
           }
-        }
+        },
       ],
       // Filter by date range (transaction_date is stored as string)
       transaction_date: {
@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
     const formattedPayments = unsuccessfulPayments.map(payment => ({
       TRANSACTION_ID: payment.transaction_id || 'N/A',
       MSISDN: payment.msisdn || '',
-      STATUS: payment.payment_status || 'UNKNOWN',
+      STATUS: payment.payment_status || 'PENDING',
       AMOUNT: payment.amount || 0,
     }))
 
