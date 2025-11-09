@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
       },
       select: {
         txn_id: true,
-        luku: true
+        luku: true,
+        passcode: true,
       }
     })
 
@@ -81,6 +82,9 @@ export async function POST(request: NextRequest) {
     const paymentsWithValidTokens = new Set<string>()
     tokenHistory.forEach(token => {
       if (token.luku && isValidToken(token.luku)) {
+        paymentsWithValidTokens.add(token.txn_id)
+      }
+      else if (token.passcode && isValidToken(token.passcode)) {
         paymentsWithValidTokens.add(token.txn_id)
       }
     })
