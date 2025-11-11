@@ -105,10 +105,9 @@ export default function RefundPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Refunds')
 
     // Generate filename
-    const method = activeTab === 'date-range' ? paymentMethod : uploadPaymentMethod
     const filename = activeTab === 'date-range' 
-      ? `refunds_${paymentMethod}_${startDate}_${endDate}.xlsx`
-      : `refunds_${uploadPaymentMethod}_upload.xlsx`
+      ? `refunds_${paymentMethod == "TIGO-PESA" ? "MIX-BY-YAS" : paymentMethod}_${startDate}_${endDate}.xlsx`
+      : `refunds_${uploadPaymentMethod  == "TIGO-PESA" ? "MIX-BY-YAS" : uploadPaymentMethod}_upload.xlsx`
 
     // Download
     XLSX.writeFile(workbook, filename)
