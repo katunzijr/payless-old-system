@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import * as XLSX from 'xlsx'
+import * as XLSX from 'xlsx-js-style'
 
 interface RefundPayment {
   TRANSACTION_ID: string | null
@@ -14,7 +14,7 @@ interface RefundPayment {
 
 interface UploadedRow {
   [key: string]: any
-  isUnsuccessful?: boolean
+  rowStatus?: 'NOT SUCCESSFUL' | 'SUCCESSFUL' | 'NOT FOUND'
 }
 
 type TabType = 'date-range' | 'upload'
@@ -33,9 +33,13 @@ export default function RefundPage() {
   const [uploadPaymentMethod, setUploadPaymentMethod] = useState('')
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [uploadedData, setUploadedData] = useState<UploadedRow[]>([])
-  
+  const [originalTxnIdColumn, setOriginalTxnIdColumn] = useState<string>('')
+
   // Common State
   const [payments, setPayments] = useState<RefundPayment[]>([])
+  const [unsuccessfulPayments, setUnsuccessfulPayments] = useState<RefundPayment[]>([])
+  const [successfulPayments, setSuccessfulPayments] = useState<RefundPayment[]>([])
+  const [notFoundPayments, setNotFoundPayments] = useState<RefundPayment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPreview, setShowPreview] = useState(false)
@@ -91,26 +95,120 @@ export default function RefundPage() {
     }
   }
 
-  const downloadExcel = () => {
-    if (payments.length === 0) {
+  const downloadExcel = (downloadType: 'unsuccessful' | 'unsuccessful+notfound' | 'all' = 'all') => {
+    let dataToDownload: RefundPayment[] = []
+    let filenameSuffix = ''
+
+    if (activeTab === 'upload') {
+      // For upload tab, use the selected download type
+      if (downloadType === 'unsuccessful') {
+        dataToDownload = unsuccessfulPayments
+        filenameSuffix = 'unsuccessful'
+      } else if (downloadType === 'unsuccessful+notfound') {
+        dataToDownload = [...unsuccessfulPayments, ...notFoundPayments]
+        filenameSuffix = 'unsuccessful_notfound'
+      } else {
+        dataToDownload = payments
+        filenameSuffix = 'all'
+      }
+    } else {
+      // For date range tab, download all payments
+      dataToDownload = payments
+    }
+
+    if (dataToDownload.length === 0) {
       setError('No data to download')
       return
     }
 
+    // Determine the transaction ID column name
+    const txnIdColumnName = (activeTab === 'upload' && originalTxnIdColumn)
+      ? originalTxnIdColumn
+      : 'TRANSACTION_ID'
+
+    // Reorder columns to put transaction ID first
+    const dataWithReorderedColumns = dataToDownload.map(payment => {
+      const reordered: any = {}
+
+      // Put transaction ID first with original column name
+      reordered[txnIdColumnName] = payment.TRANSACTION_ID
+
+      // Add remaining fields
+      if (payment.MSISDN !== undefined) reordered.MSISDN = payment.MSISDN
+      if (payment.AMOUNT !== undefined) reordered.AMOUNT = payment.AMOUNT
+      if (payment.STATUS !== undefined) reordered.STATUS = payment.STATUS
+
+      return reordered
+    })
+
     // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(payments)
-    
+    const worksheet = XLSX.utils.json_to_sheet(dataWithReorderedColumns)
+
+    // Auto-size columns
+    const columnWidths: { wch: number }[] = []
+    const columnNames = Object.keys(dataWithReorderedColumns[0] || {})
+
+    columnNames.forEach((columnName, idx) => {
+      // Calculate max width needed for this column
+      let maxWidth = columnName.length
+      dataWithReorderedColumns.forEach(row => {
+        const cellValue = String(row[columnName] || '')
+        maxWidth = Math.max(maxWidth, cellValue.length)
+      })
+      // Add some padding and cap at 50 characters
+      columnWidths[idx] = { wch: Math.min(maxWidth + 2, 50) }
+    })
+    worksheet['!cols'] = columnWidths
+
+    // Apply color coding to rows using proper Excel styling
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
+
+    for (let rowNum = range.s.r + 1; rowNum <= range.e.r; rowNum++) {
+      const dataIndex = rowNum - 1 // Adjust for header row
+      const payment = dataToDownload[dataIndex]
+
+      if (payment) {
+        // Determine row color based on status
+        let fillColor = 'FFFFFF' // White (default)
+        if (payment.STATUS === 'NOT SUCCESSFUL') {
+          fillColor = 'FEE2E2' // Red-50
+        } else if (payment.STATUS === 'SUCCESSFUL') {
+          fillColor = 'DCFCE7' // Green-50
+        } else if (payment.STATUS === 'NOT FOUND') {
+          fillColor = 'FEF3C7' // Yellow-50
+        }
+
+        // Apply fill to all cells in this row
+        for (let colNum = range.s.c; colNum <= range.e.c; colNum++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: rowNum, c: colNum })
+          if (!worksheet[cellAddress]) continue
+
+          // Ensure cell has proper structure
+          if (!worksheet[cellAddress].s) {
+            worksheet[cellAddress].s = {}
+          }
+
+          worksheet[cellAddress].s = {
+            fill: {
+              patternType: 'solid',
+              fgColor: { rgb: fillColor }
+            },
+          }
+        }
+      }
+    }
+
     // Create workbook
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Refunds')
 
     // Generate filename
-    const filename = activeTab === 'date-range' 
+    const filename = activeTab === 'date-range'
       ? `refunds_${paymentMethod == "TIGO-PESA" ? "MIX-BY-YAS" : paymentMethod}_${startDate}_${endDate}.xlsx`
-      : `refunds_${uploadPaymentMethod  == "TIGO-PESA" ? "MIX-BY-YAS" : uploadPaymentMethod}_upload.xlsx`
+      : `refunds_${uploadPaymentMethod == "TIGO-PESA" ? "MIX-BY-YAS" : uploadPaymentMethod}_${filenameSuffix}.xlsx`
 
     // Download
-    XLSX.writeFile(workbook, filename)
+    XLSX.writeFile(workbook, filename, { bookType: 'xlsx' })
   }
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,49 +366,94 @@ export default function RefundPage() {
       if (!response.ok) {
         setError(result.error || 'Failed to process uploaded file')
         setPayments([])
+        setUnsuccessfulPayments([])
+        setSuccessfulPayments([])
+        setNotFoundPayments([])
         setUploadedData([])
       } else {
-        // Get unsuccessful transaction IDs
+        // Store all three categories
+        const unsuccessful = result.unsuccessful || []
+        const successful = result.successful || []
+        const notFound = result.notFound || []
+
+        setUnsuccessfulPayments(unsuccessful)
+        setSuccessfulPayments(successful)
+        setNotFoundPayments(notFound)
+        setPayments([...unsuccessful, ...notFound, ...successful])
+
+        // Create sets for each category
         const unsuccessfulIds = new Set(
-          result.payments.map((p: RefundPayment) => p.TRANSACTION_ID)
+          unsuccessful.map((p: RefundPayment) => p.TRANSACTION_ID)
+        )
+        const successfulIds = new Set(
+          successful.map((p: RefundPayment) => p.TRANSACTION_ID)
+        )
+        const notFoundIds = new Set(
+          notFound.map((p: RefundPayment) => p.TRANSACTION_ID)
         )
 
-        // Mark rows as unsuccessful or successful
+        // Find and store the original transaction ID column name
+        let originalColumnName = 'TRANSACTION_ID'
+        if (uploadPaymentMethod === 'M-PESA') {
+          const keys = Object.keys(jsonData[0] || {})
+          const foundKey = keys.find(key => {
+            const lowerKey = key.toLowerCase()
+            return lowerKey === 'orderid' ||
+                   lowerKey === 'receipt no.' ||
+                   lowerKey === 'receipt no'
+          })
+          if (foundKey) originalColumnName = foundKey.toUpperCase()
+        } else if (uploadPaymentMethod === 'TIGO-PESA') {
+          const keys = Object.keys(jsonData[0] || {})
+          const foundKey = keys.find(key => {
+            const lowerKey = key.toLowerCase()
+            return lowerKey === 'sales_order_number' ||
+                   lowerKey === 'transfer_id' ||
+                   lowerKey === 'transaction_id'
+          })
+          if (foundKey) originalColumnName = foundKey.toUpperCase()
+        }
+        setOriginalTxnIdColumn(originalColumnName)
+
+        // Mark rows with their status
         const markedData = jsonData.map((row: any) => {
           let transactionId = ''
           if (uploadPaymentMethod === 'M-PESA') {
-            // Find ORDERID column case-insensitively
-            // const orderIdKey = Object.keys(row).find(key => 
-            //   key.toLowerCase() === 'orderid'
-            // )
             const keys = Object.keys(row)
             const orderIdKey = keys.find(key => {
               const lowerKey = key.toLowerCase()
-              return lowerKey === 'orderid' || 
-                     lowerKey === 'receipt no.' || 
+              return lowerKey === 'orderid' ||
+                     lowerKey === 'receipt no.' ||
                      lowerKey === 'receipt no'
             })
             transactionId = orderIdKey ? String(row[orderIdKey] || '').trim() : ''
           } else if (uploadPaymentMethod === 'TIGO-PESA') {
-            // Find transaction ID column case-insensitively
             const keys = Object.keys(row)
             const orderKey = keys.find(key => {
               const lowerKey = key.toLowerCase()
-              return lowerKey === 'sales_order_number' || 
-                     lowerKey === 'transfer_id' || 
+              return lowerKey === 'sales_order_number' ||
+                     lowerKey === 'transfer_id' ||
                      lowerKey === 'transaction_id'
             })
             transactionId = orderKey ? String(row[orderKey] || '').trim() : ''
           }
-          
+
+          let rowStatus: 'NOT SUCCESSFUL' | 'SUCCESSFUL' | 'NOT FOUND' = 'SUCCESSFUL'
+          if (unsuccessfulIds.has(transactionId)) {
+            rowStatus = 'NOT SUCCESSFUL'
+          } else if (notFoundIds.has(transactionId)) {
+            rowStatus = 'NOT FOUND'
+          } else if (successfulIds.has(transactionId)) {
+            rowStatus = 'SUCCESSFUL'
+          }
+
           return {
             ...row,
-            isUnsuccessful: unsuccessfulIds.has(transactionId)
+            rowStatus
           }
         })
 
         setUploadedData(markedData)
-        setPayments(result.payments || [])
         setShowPreview(true)
       }
     } catch (error) {
@@ -382,6 +525,7 @@ export default function RefundPage() {
                       Start Date
                     </label>
                     <input
+                      aria-label='Select date start'
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
@@ -395,6 +539,7 @@ export default function RefundPage() {
                       End Date
                     </label>
                     <input
+                      aria-label='Select date end'
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
@@ -408,6 +553,7 @@ export default function RefundPage() {
                       Payment Method
                     </label>
                     <select
+                      aria-label='Select payment method'
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value)}
                       className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -441,6 +587,7 @@ export default function RefundPage() {
                       Payment Method
                     </label>
                     <select
+                      aria-label='Select payment method'
                       value={uploadPaymentMethod}
                       onChange={(e) => setUploadPaymentMethod(e.target.value)}
                       className="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
@@ -460,6 +607,7 @@ export default function RefundPage() {
                       Upload File
                     </label>
                     <input
+                      aria-label='Choose excel file'
                       type="file"
                       accept=".xlsx,.xls,.csv"
                       onChange={handleFileUpload}
@@ -498,63 +646,148 @@ export default function RefundPage() {
             {/* Preview Section */}
             {showPreview && (
               <>
-                <div className="flex items-center justify-between mb-4 pt-6 border-t border-gray-200">
-                  <p className="text-sm text-gray-600">
-                    {activeTab === 'upload' ? (
-                      <>
-                        Total Rows: <span className="font-semibold">{uploadedData.length}</span>
-                        {' | '}
-                        Unsuccessful: <span className="font-semibold text-red-600">{payments.length}</span>
-                      </>
-                    ) : (
-                      <>
-                        Total Records: <span className="font-semibold">{payments.length}</span>
-                      </>
-                    )}
-                  </p>
-                  <button
-                    onClick={downloadExcel}
-                    disabled={payments.length === 0}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <svg 
-                      className="-ml-1 mr-2 h-5 w-5" 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill="none" 
-                      viewBox="0 0 24 24" 
-                      stroke="currentColor"
-                    >
-                      <path 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round" 
-                        strokeWidth={2} 
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" 
-                      />
-                    </svg>
-                    Download Excel
-                  </button>
+                <div className="pt-6 border-t border-gray-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-sm text-gray-600">
+                      {activeTab === 'upload' ? (
+                        <div className="space-y-1">
+                          <div>
+                            Total Rows: <span className="font-semibold">{uploadedData.length}</span>  {uploadedData.length > payments.length && <span>Contain duplicates</span>}
+                          </div>
+                          <div className="flex gap-4">
+                            <span>
+                              Unsuccessful: <span className="font-semibold text-red-600">{unsuccessfulPayments.length}</span>
+                            </span>
+                            <span>
+                              Not Found: <span className="font-semibold text-yellow-600">{notFoundPayments.length}</span>
+                            </span>
+                            <span>
+                              Successful: <span className="font-semibold text-green-600">{successfulPayments.length}</span>
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          Total Records: <span className="font-semibold">{payments.length}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      {activeTab === 'upload' && unsuccessfulPayments.length > 0 && (
+                        <>
+                          <button
+                            onClick={() => downloadExcel('unsuccessful')}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          >
+                            <svg
+                              className="-ml-1 mr-2 h-5 w-5"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                            Unsuccessful Only
+                          </button>
+                          <button
+                            onClick={() => downloadExcel('unsuccessful+notfound')}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                          >
+                            <svg
+                              className="-ml-1 mr-2 h-5 w-5"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                            Unsuccessful + Not Found
+                          </button>
+                          <button
+                            onClick={() => downloadExcel('all')}
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                          >
+                            <svg
+                              className="-ml-1 mr-2 h-5 w-5"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                            All
+                          </button>
+                        </>
+                      )}
+                      {activeTab === 'date-range' && (
+                        <button
+                          onClick={() => downloadExcel('all')}
+                          disabled={payments.length === 0}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg
+                            className="-ml-1 mr-2 h-5 w-5"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                            />
+                          </svg>
+                          Download Excel
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {activeTab === 'upload' && uploadedData.length > 0 ? (
-                  // Upload Tab - Show original Excel data with unsuccessful rows highlighted
+                  // Upload Tab - Show original Excel data with status-based row colors
                   <div className="overflow-x-auto">
-                    <div className="mb-2 text-xs text-gray-600 flex items-center gap-2">
+                    <div className="mb-2 text-xs text-gray-600 flex items-center gap-4">
                       <span className="inline-flex items-center">
                         <span className="w-4 h-4 bg-red-100 border border-red-300 mr-1"></span>
-                        Unsuccessful payments (will be exported)
+                        Unsuccessful payments
                       </span>
-                      <span className="inline-flex items-center ml-4">
+                      <span className="inline-flex items-center">
+                        <span className="w-4 h-4 bg-yellow-100 border border-yellow-300 mr-1"></span>
+                        Not found in database
+                      </span>
+                      <span className="inline-flex items-center">
                         <span className="w-4 h-4 bg-green-100 border border-green-300 mr-1"></span>
-                        Successful or not found
+                        Successful payments
                       </span>
                     </div>
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
                           {uploadedData.length > 0 && Object.keys(uploadedData[0])
-                            .filter(key => key !== 'isUnsuccessful')
+                            .filter(key => key !== 'rowStatus')
                             .map((header, index) => (
-                              <th 
+                              <th
                                 key={index}
                                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                               >
@@ -565,26 +798,34 @@ export default function RefundPage() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {uploadedData.map((row, rowIndex) => (
-                          <tr 
-                            key={rowIndex} 
-                            className={row.isUnsuccessful ? 'bg-red-50 hover:bg-red-100' : 'bg-green-100 hover:bg-green-100'}
-                          >
-                            {Object.entries(row)
-                              .filter(([key]) => key !== 'isUnsuccessful')
-                              .map(([key, value], cellIndex) => (
-                                <td 
-                                  key={cellIndex}
-                                  className={`px-6 py-4 whitespace-nowrap text-sm ${
-                                    row.isUnsuccessful ? 'text-gray-900 font-medium' : 'text-gray-700'
-                                  }`}
-                                >
-                                  {value !== null && value !== undefined ? String(value) : ''}
-                                </td>
-                              ))
-                            }
-                          </tr>
-                        ))}
+                        {uploadedData.map((row, rowIndex) => {
+                          const bgColor =
+                            row.rowStatus === 'NOT SUCCESSFUL'
+                              ? 'bg-red-50 hover:bg-red-100'
+                              : row.rowStatus === 'NOT FOUND'
+                              ? 'bg-yellow-50 hover:bg-yellow-100'
+                              : 'bg-green-50 hover:bg-green-100'
+
+                          return (
+                            <tr key={rowIndex} className={bgColor}>
+                              {Object.entries(row)
+                                .filter(([key]) => key !== 'rowStatus')
+                                .map(([, value], cellIndex) => (
+                                  <td
+                                    key={cellIndex}
+                                    className={`px-6 py-4 whitespace-nowrap text-sm ${
+                                      row.rowStatus === 'NOT SUCCESSFUL'
+                                        ? 'text-gray-900 font-medium'
+                                        : 'text-gray-700'
+                                    }`}
+                                  >
+                                    {value !== null && value !== undefined ? String(value) : ''}
+                                  </td>
+                                ))
+                              }
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
